@@ -74,7 +74,8 @@ async function act(m) {
     case 'item': {
       const it = ITEMS.find(i => i.id === m.id);
       if (!it) break;
-      if (!st.items.includes(it.id)) {
+      const unlocked = demoItemsUnlocked(st);
+      if (!st.items.includes(it.id) && !unlocked) {
         if (st.points < it.cost) break;
         st.points -= it.cost; st.items.push(it.id);
         if (it.type === 'acc') st.equipped = it.id; else st.color = it.id;
@@ -84,15 +85,21 @@ async function act(m) {
     }
     case 'animal': {
       if (!ANIMAL_IDS.includes(m.id)) break;
-      if (!st.animals.includes(m.id)) { if (st.points < ANIMAL_COST) break; st.points -= ANIMAL_COST; st.animals.push(m.id); }
+      if (!st.animals.includes(m.id) && !demoItemsUnlocked(st)) { if (st.points < ANIMAL_COST) break; st.points -= ANIMAL_COST; st.animals.push(m.id); }
       st.animal = m.id;
       break;
     }
     case 'settings': {
       const c = m.settings || {};
-      st.settings.sound = !!c.sound; st.settings.demo = !!c.demo;
+      const hadDemoUnlocks = demoItemsUnlocked(st);
+      st.settings.sound = !!c.sound; st.settings.demo = !!c.demo; st.settings.demoUnlocks = !!c.demoUnlocks;
       if (Array.isArray(c.productive)) st.settings.productive = [...new Set(c.productive.map(cleanDomain).filter(Boolean))];
       if (Array.isArray(c.distracting)) st.settings.distracting = [...new Set(c.distracting.map(cleanDomain).filter(Boolean))];
+      if (hadDemoUnlocks && !demoItemsUnlocked(st)) {
+        if (st.equipped && !st.items.includes(st.equipped)) st.equipped = null;
+        if (st.color && !st.items.includes(st.color)) st.color = null;
+        if (!st.animals.includes(st.animal)) st.animal = st.animals[0] || 'retriever';
+      }
       if (st.session) applyTab(st, await currentTab());
       break;
     }

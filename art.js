@@ -6,7 +6,7 @@ const E = (x, y, rx, ry, f, a) => '<ellipse cx="' + x + '" cy="' + y + '" rx="' 
 const Ci = (x, y, r, f, a) => '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + f + '" ' + (a || '') + '/>';
 const Pa = (d, f, a) => '<path d="' + d + '" fill="' + f + '" ' + (a || '') + '/>';
 const St = (d, c, w) => '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="' + w + '" stroke-linecap="round"/>';
-const P = c => 'fill="none" stroke="' + c + '" stroke-width="2.4" stroke-linecap="round"';
+const P = c => 'fill="none" stroke="' + c + '" stroke-width="2.8" stroke-linecap="round"';
 const WH = c => St('M44 76 L26 72 M44 79 L26 82 M76 76 L94 72 M76 79 L94 82', c, 1.3);
 
 function face(m, o) {
@@ -23,14 +23,13 @@ function face(m, o) {
     t += '<path d="M' + (x1 - 6) + ' ' + (y - 6) + ' L' + (x1 + 6) + ' ' + (y - 11) + ' M' + (x2 - 6) + ' ' + (y - 11) + ' L' + (x2 + 6) + ' ' + (y - 6) + '" ' + P(b) + '/>';
     t += Pa('M' + (x2 + 13) + ' ' + (y - 8) + ' Q' + (x2 + 18) + ' ' + (y - 1) + ' ' + (x2 + 13) + ' ' + (y + 3) + ' Q' + (x2 + 8) + ' ' + (y - 1) + ' ' + (x2 + 13) + ' ' + (y - 8) + 'Z', '#85B7EB');
   } else {
-    t += Ci(x1, y + 1, 3.3, e) + Ci(x2, y + 1, 3.3, e);
-    if (m === 'okay') t += '<path d="M' + (x1 - 5) + ' ' + (y - 6) + ' L' + (x1 + 5) + ' ' + (y - 6) + ' M' + (x2 - 5) + ' ' + (y - 6) + ' L' + (x2 + 5) + ' ' + (y - 6) + '" ' + P(b) + '/>';
+    t += Ci(x1, y + 1, 3.7, e) + Ci(x2, y + 1, 3.7, e);
     if (m === 'sad') t += '<path d="M' + (x1 - 6) + ' ' + (y - 5) + ' L' + (x1 + 6) + ' ' + (y - 10) + ' M' + (x2 - 6) + ' ' + (y - 10) + ' L' + (x2 + 6) + ' ' + (y - 5) + '" ' + P(b) + '/>' + E(x1 - 5, y + 11, 2.2, 3.4, '#85B7EB');
   }
   if (o.mouth === false) return t;
   const my = o.my, w = o.mw, c = o.mc, a = 60 - w, d = 60 + w, pk = '#F28CA0';
   if (m === 'happy') t += '<path d="M' + a + ' ' + my + ' Q60 ' + (my + 9) + ' ' + d + ' ' + my + '" ' + P(c) + '/>' + E(60, my + 6, 4.2, 5, pk);
-  if (m === 'okay') t += '<path d="M' + a + ' ' + my + ' L' + d + ' ' + my + '" ' + P(c) + '/>';
+  if (m === 'okay') t += '<path d="M55 ' + my + ' L65 ' + my + '" ' + P(c) + '/>';
   if (m === 'sad') t += '<path d="M' + a + ' ' + (my + 5) + ' Q60 ' + (my - 3) + ' ' + d + ' ' + (my + 5) + '" ' + P(c) + '/>';
   if (m === 'panic') t += E(60, my + 3, 4.5, 6, '#7a2c3a', 'stroke="' + c + '" stroke-width="1.4"');
   if (m === 'fainted') t += '<path d="M' + a + ' ' + my + ' L' + d + ' ' + my + '" ' + P(c) + '/>' + E(66, my + 5, 4, 5, pk);
@@ -40,17 +39,19 @@ function face(m, o) {
 
 function ears(o, m) {
   const e = o.e, i = o.ei || e, ol = o.ol ? 'stroke="' + o.ol + '" stroke-width="1.5"' : '', d = m === 'sad' ? 7 : 0;
+  let art = '';
   switch (o.et) {
-    case 'round': return Ci(38, 40, 10, e, ol) + Ci(82, 40, 10, e, ol) + Ci(38, 40, 5, i) + Ci(82, 40, 5, i);
-    case 'sm': return Ci(37, 42, 6.5, e, ol) + Ci(83, 42, 6.5, e, ol);
-    case 'big': return Ci(32, 44, 14, e, ol) + Ci(88, 44, 14, e, ol) + Ci(32, 44, 8, i) + Ci(88, 44, 8, i);
-    case 'point': return Pa('M38 50 L33 14 L58 38Z', e, ol) + Pa('M82 50 L87 14 L62 38Z', e, ol) + Pa('M40 44 L37 24 L50 38Z', i) + Pa('M80 44 L83 24 L70 38Z', i);
-    case 'cat': return Pa('M38 48 L35 22 L57 38Z', e, ol) + Pa('M82 48 L85 22 L63 38Z', e, ol) + Pa('M40 44 L38 29 L51 38Z', i) + Pa('M80 44 L82 29 L69 38Z', i);
-    case 'float': return Pa('M36 46 Q20 56 27 ' + (82 + d) + ' Q38 ' + (86 + d) + ' 42 66Z', e, ol) + Pa('M84 46 Q100 56 93 ' + (82 + d) + ' Q82 ' + (86 + d) + ' 78 66Z', e, ol);
-    case 'fold': return Pa('M40 42 Q26 38 30 58 Q40 58 46 50Z', e, ol) + Pa('M80 42 Q94 38 90 58 Q80 58 74 50Z', e, ol);
-    case 'long': return E(46, 22, 8, 25, e, ol + ' transform="rotate(-8 46 22)"') + E(74, 22, 8, 25, e, ol + ' transform="rotate(8 74 22)"') + E(46, 24, 4, 17, i, 'transform="rotate(-8 46 24)"') + E(74, 24, 4, 17, i, 'transform="rotate(8 74 24)"');
+    case 'round': art = Ci(38, 40, 10, e, ol) + Ci(82, 40, 10, e, ol) + Ci(38, 40, 5, i) + Ci(82, 40, 5, i); break;
+    case 'sm': art = Ci(37, 42, 6.5, e, ol) + Ci(83, 42, 6.5, e, ol); break;
+    case 'big': art = Ci(32, 44, 14, e, ol) + Ci(88, 44, 14, e, ol) + Ci(32, 44, 8, i) + Ci(88, 44, 8, i); break;
+    case 'point': art = Pa('M38 50 L33 14 L58 38Z', e, ol) + Pa('M82 50 L87 14 L62 38Z', e, ol) + Pa('M40 44 L37 24 L50 38Z', i) + Pa('M80 44 L83 24 L70 38Z', i); break;
+    case 'cat': art = Pa('M38 48 L35 22 L57 38Z', e, ol) + Pa('M82 48 L85 22 L63 38Z', e, ol) + Pa('M40 44 L38 29 L51 38Z', i) + Pa('M80 44 L82 29 L69 38Z', i); break;
+    case 'float': art = Pa('M36 46 Q20 56 27 ' + (82 + d) + ' Q38 ' + (86 + d) + ' 42 66Z', e, ol) + Pa('M84 46 Q100 56 93 ' + (82 + d) + ' Q82 ' + (86 + d) + ' 78 66Z', e, ol); break;
+    case 'fluffy': art = Pa('M38 43 C27 38 19 46 20 57 C20 63 25 65 23 ' + (70 + d) + ' C29 ' + (77 + d) + ' 39 ' + (71 + d) + ' 43 62 C46 54 44 47 38 43Z', e, ol) + Pa('M82 43 C93 38 101 46 100 57 C100 63 95 65 97 ' + (70 + d) + ' C91 ' + (77 + d) + ' 81 ' + (71 + d) + ' 77 62 C74 54 76 47 82 43Z', e, ol); break;
+    case 'fold': art = Pa('M40 42 Q26 38 30 58 Q40 58 46 50Z', e, ol) + Pa('M80 42 Q94 38 90 58 Q80 58 74 50Z', e, ol); break;
+    case 'long': art = E(46, 22, 8, 25, e, ol + ' transform="rotate(-8 46 22)"') + E(74, 22, 8, 25, e, ol + ' transform="rotate(8 74 22)"') + E(46, 24, 4, 17, i, 'transform="rotate(-8 46 24)"') + E(74, 24, 4, 17, i, 'transform="rotate(8 74 24)"'); break;
   }
-  return '';
+  return art ? '<g class="ears">' + art + '</g>' : '';
 }
 
 function tail(o) {
@@ -83,19 +84,27 @@ function nose(o) {
 function mam(o, m) {
   const ol = o.ol ? 'stroke="' + o.ol + '" stroke-width="1.5"' : '', h = o.h || o.b, lc = o.lc || o.b, pc = o.pc || o.bl || o.b;
   const z = { sm: [73, 11, 8], md: [74, 15, 11], lg: [76, 17, 13] }[o.mzs || 'md'];
-  return '<g class="' + (m === 'happy' ? 'wag' : '') + '">' + tail(o) + '</g>' +
-    E(60, 108, 28, 26, o.b, ol) + (o.bodyX || '') + E(60, 116, 16, 17, o.bl || o.b) +
-    '<rect x="46" y="112" width="9" height="22" rx="4.5" fill="' + lc + '"/><rect x="65" y="112" width="9" height="22" rx="4.5" fill="' + lc + '"/>' + E(50.5, 134, 8, 5, pc) + E(69.5, 134, 8, 5, pc) +
-    (o.behind || '') + ears(o, m) + Ci(60, 62, 28, h, ol) + (o.headX || '') +
+  const tailClass = m === 'happy' ? 'tail wag' : m === 'okay' ? 'tail tail-sway' : m === 'sad' ? 'tail tail-droop' : m === 'panic' ? 'tail tail-twitch' : m === 'fainted' ? 'tail tail-faint' : 'tail';
+  return '<g class="' + tailClass + '">' + tail(o) + '</g>' +
+    E(39, 119, 12, 10, o.b, ol) + E(81, 119, 12, 10, o.b, ol) + E(60, 107, 25, 25, o.b, ol) + (o.bodyX || '') +
+    Pa('M60 91 C52 84 44 89 46 98 C48 106 56 112 60 116 C64 112 72 106 74 98 C76 89 68 84 60 91Z', o.bl || o.b) +
+    '<rect x="44" y="108" width="10" height="22" rx="5" fill="' + lc + '"/><rect x="66" y="108" width="10" height="22" rx="5" fill="' + lc + '"/>' + E(49, 131, 9, 5.5, pc) + E(71, 131, 9, 5.5, pc) +
+    (o.behind || '') + ears(o, m) + Ci(60, 61, 31, h, ol) + (o.headX || '') +
     (o.mz ? E(60, z[0], z[1], z[2], o.mz) : '') + nose(o) +
     face(m, { y: o.fy || 58, d: 11, my: o.my || 78, mw: 8, ec: o.ec || '#3b2a20', bc: o.bc, mc: o.mc || '#3b2a20' }) + (o.fx || '');
 }
 
-const bump = (m, x, y) => m === 'happy' ? Pa('M' + (x - 5) + ' ' + y + ' L' + (x + 5) + ' ' + y + ' L' + x + ' ' + (y + 8) + 'Z', '#E08A1A') : '';
+function birdBeak(m, y, c, w) {
+  w = w || 7;
+  if (m === 'happy') return Pa('M' + (60 - w) + ' ' + y + ' L' + (60 + w) + ' ' + y + ' L60 ' + (y + 9) + 'Z', c) + E(60, y + 6, Math.max(3, w - 3), 3, '#E57E25');
+  if (m === 'panic') return E(60, y + 4, Math.max(4, w - 2), 6, '#8F3043', 'stroke="' + c + '" stroke-width="1.5"');
+  if (m === 'sad') return Pa('M' + (60 - w) + ' ' + (y + 3) + ' L60 ' + y + ' L' + (60 + w) + ' ' + (y + 3) + ' L60 ' + (y + 7) + 'Z', c);
+  return St('M' + (60 - w) + ' ' + (y + 3) + ' L' + (60 + w) + ' ' + (y + 3), c, 3);
+}
 function penguin(m) {
   return E(46, 138, 10, 5, '#F0A030') + E(74, 138, 10, 5, '#F0A030') + E(60, 102, 31, 35, '#2B2F3A') + E(60, 108, 20, 27, '#F4F4F2') +
     E(30, 104, 8, 20, '#2B2F3A', 'transform="rotate(12 30 104)"') + E(90, 104, 8, 20, '#2B2F3A', 'transform="rotate(-12 90 104)"') +
-    Ci(60, 58, 24, '#2B2F3A') + E(50, 60, 9, 11, '#F4F4F2') + E(70, 60, 9, 11, '#F4F4F2') + Pa('M53 64 L67 64 L60 74Z', '#F0A030') + bump(m, 60, 71) +
+    Ci(60, 58, 24, '#2B2F3A') + E(50, 60, 9, 11, '#F4F4F2') + E(70, 60, 9, 11, '#F4F4F2') + birdBeak(m, 64, '#F0A030') +
     face(m, { y: 55, d: 10, ec: '#2b1d14', bc: '#9AA0B0', mouth: false });
 }
 function owl(m) {
@@ -103,7 +112,7 @@ function owl(m) {
     St('M52 98 Q55 101 58 98 M62 98 Q65 101 68 98 M52 108 Q55 111 58 108 M62 108 Q65 111 68 108 M57 118 Q60 121 63 118', '#B79A78', 1.6) +
     E(30, 106, 9, 22, '#7A5233', 'transform="rotate(10 30 106)"') + E(90, 106, 9, 22, '#7A5233', 'transform="rotate(-10 90 106)"') +
     Pa('M36 44 L32 22 L52 36Z', '#9A6B45') + Pa('M84 44 L88 22 L68 36Z', '#9A6B45') + Ci(60, 62, 28, '#9A6B45') +
-    Ci(47, 60, 13, '#E9D3B4') + Ci(73, 60, 13, '#E9D3B4') + Ci(47, 60, 8, '#F0A030') + Ci(73, 60, 8, '#F0A030') + Pa('M56 68 L64 68 L60 77Z', '#D98A1E') +
+    Ci(47, 60, 13, '#E9D3B4') + Ci(73, 60, 13, '#E9D3B4') + Ci(47, 60, 8, '#F0A030') + Ci(73, 60, 8, '#F0A030') + birdBeak(m, 68, '#D98A1E', 5) +
     face(m, { y: 59, d: 13, ec: '#2b1d14', bc: '#7A5233', mouth: false });
 }
 function chicken(m) {
@@ -112,7 +121,7 @@ function chicken(m) {
     Ci(52, 35, 6, '#E24B4A') + Ci(60, 31, 7, '#E24B4A') + Ci(68, 35, 6, '#E24B4A') +
     E(60, 100, 31, 30, '#FFF1D6', 'stroke="#E4D6BC" stroke-width="2"') + E(60, 56, 23, 23, '#FFF1D6', 'stroke="#E4D6BC" stroke-width="2"') + E(60, 78, 15, 8, '#FFF1D6') +
     '<g class="' + (f ? 'fl' : '') + '">' + E(34, 102, 9, 17, '#F2E2BE', 'stroke="#E4D6BC" stroke-width="1.5"') + '</g><g class="' + (f ? 'fr' : '') + '">' + E(86, 102, 9, 17, '#F2E2BE', 'stroke="#E4D6BC" stroke-width="1.5"') + '</g>' +
-    E(60, 79, 4, 5, '#E24B4A') + (f ? Pa('M55 71 L65 71 L60 79Z', '#E08A1A') : '') + Pa('M53 62 L67 62 L60 72Z', '#F0A030') +
+    E(60, 79, 4, 5, '#E24B4A') + birdBeak(m, 62, '#F0A030') +
     (f ? E(42, 63, 5, 3, '#F4B6B6', 'opacity=".8"') + E(78, 63, 5, 3, '#F4B6B6', 'opacity=".8"') : '') +
     face(m, { y: 51, d: 10, ec: '#2b1d14', mouth: false });
 }
@@ -120,8 +129,8 @@ function duck(m) {
   const f = m === 'happy';
   return Pa('M40 140 L48 128 L58 140Z', '#F59B2B') + Pa('M62 140 L72 128 L80 140Z', '#F59B2B') + E(60, 104, 30, 28, '#FFD84A') +
     E(34, 106, 8, 15, '#F2C230', 'transform="rotate(10 34 106)"') + E(86, 106, 8, 15, '#F2C230', 'transform="rotate(-10 86 106)"') +
-    St('M60 38 Q54 28 63 26', '#FFD84A', 4) + Ci(60, 60, 24, '#FFD84A') + E(60, 72, 15, 7.5, '#F59B2B') +
-    (f ? E(60, 76, 10, 4, '#E08A1A') + E(42, 66, 5, 3, '#F4A0A0', 'opacity=".8"') + E(78, 66, 5, 3, '#F4A0A0', 'opacity=".8"') : '') +
+    St('M60 38 Q54 28 63 26', '#FFD84A', 4) + Ci(60, 60, 24, '#FFD84A') + birdBeak(m, 68, '#F59B2B', 10) +
+    (f ? E(42, 66, 5, 3, '#F4A0A0', 'opacity=".8"') + E(78, 66, 5, 3, '#F4A0A0', 'opacity=".8"') : '') +
     face(m, { y: 55, d: 11, ec: '#2b1d14', mouth: false });
 }
 function frog(m) {
@@ -133,7 +142,7 @@ function frog(m) {
 const WOOL = 'stroke="#D9D3C7" stroke-width="1.5"';
 // [id, name, sound, drawFn, accessory anchors {t: top of head, e: eye y, d: half eye distance}]
 const ANIMALS = [
-['retriever', 'Golden retriever', 'Woof!', m => mam({ b: '#E8A94A', h: '#EDB052', bl: '#F3C77A', e: '#C9812F', et: 'float', mz: '#F6D9A0', nc: '#3b2a20', tail: 'dog', tc: '#D9923A' }, m)],
+['retriever', 'Golden retriever', 'Woof!', m => mam({ b: '#F2AC4B', h: '#F7B85F', bl: '#FFE0A2', e: '#D98A36', et: 'fluffy', mz: '#FFE1AD', nc: '#30251F', tail: 'bushy', tc: '#E79A3D', ec: '#30251F', mc: '#30251F' }, m)],
 ['shepherd', 'German shepherd', 'Bark!', m => mam({ b: '#C98A3E', bl: '#D9A15A', pc: '#B8772F', e: '#C98A3E', ei: '#2E2A28', et: 'point', mz: '#4A3A30', nc: '#0f0b09', tail: 'dog', tc: '#2E2A28', bodyX: Pa('M36 100 Q60 80 84 100 Q82 118 60 120 Q38 118 36 100Z', '#2E2A28'), ec: '#2A1B12', mc: '#F6D9A0', my: 80 }, m)],
 ['corgi', 'Corgi', 'Yip!', m => mam({ b: '#E39A45', bl: '#fff', pc: '#fff', e: '#E39A45', ei: '#F3B0A0', et: 'point', mz: '#fff', nc: '#2b2b2b', tail: 'nub', headX: Pa('M60 36 Q50 54 53 66 L67 66 Q70 54 60 36Z', '#fff'), mc: '#2b2b2b' }, m)],
 ['husky', 'Husky', 'Awoo!', m => mam({ b: '#8E96A3', h: '#7C8491', bl: '#fff', pc: '#fff', e: '#7C8491', ei: '#3A3F47', et: 'point', mz: '#fff', nc: '#1f1f22', tail: 'bushy', tc: '#8E96A3', tt: '#fff', headX: Pa('M60 48 Q36 52 35 74 Q36 90 60 90 Q84 90 85 74 Q84 52 60 48Z', '#fff') }, m)],
@@ -173,10 +182,20 @@ function accessory(id, g) {
   return '';
 }
 
+const AURA_PARTICLES = {
+  happy: [['heart', '♥', 17, 30, 0], ['sparkle', '✦', 78, 22, .45], ['heart', '♥', 86, 54, .9], ['sparkle', '✧', 24, 67, 1.2]],
+  sad: [['drop', '●', 18, 34, 0], ['drop', '●', 84, 46, .55], ['mist', '·', 28, 72, 1.05]],
+  panic: [['alert', '!', 17, 31, 0], ['bolt', '⚡', 82, 25, .28], ['alert', '!', 88, 63, .62], ['bolt', '⚡', 23, 72, .86]],
+  fainted: [['faint-star', '✦', 20, 32, 0], ['faint-star', '✧', 80, 26, .7], ['faint-dot', '·', 84, 64, 1.15]]
+};
+function auraHTML(mood) {
+  return (AURA_PARTICLES[mood] || []).map((p, i) => '<span class="aura-particle ' + p[0] + '" style="--x:' + p[2] + '%;--y:' + p[3] + '%;--delay:' + p[4] + 's;--i:' + i + '">' + p[1] + '</span>').join('');
+}
+
 function buddySVG(id, mood, opt) {
   opt = opt || {};
   const a = ANIMALS.find(x => x[0] === id) || ANIMALS[0], g = Object.assign({ t: 36, e: 59, d: 11 }, a[4] || {});
   const hue = opt.hue ? ' style="filter:hue-rotate(' + opt.hue + 'deg) saturate(1.15)"' : '';
   const z = mood === 'sleeping' ? '<text x="94" y="38" font-size="15" fill="#8a7f9e">z</text><text x="104" y="24" font-size="12" fill="#8a7f9e">z</text>' : '';
-  return '<svg viewBox="0 0 130 150" width="100%" role="img" aria-label="' + a[1] + ', ' + mood + '"><g' + (mood === 'fainted' ? ' transform="rotate(90 60 95)"' : '') + '><g' + hue + '>' + a[3](mood) + '</g>' + (opt.acc ? accessory(opt.acc, g) : '') + '</g>' + z + '</svg>';
+  return '<svg class="mood-' + mood + '" viewBox="0 0 130 150" width="100%" role="img" aria-label="' + a[1] + ', ' + mood + '"><g' + (mood === 'fainted' ? ' transform="translate(2 5) rotate(9 60 96)"' : '') + '><g' + hue + '>' + a[3](mood) + '</g>' + (opt.acc ? accessory(opt.acc, g) : '') + '</g>' + z + '</svg>';
 }

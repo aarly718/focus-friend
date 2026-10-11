@@ -52,6 +52,9 @@ function renderBuddy() {
   if (key === buddyKey) return;               // only redraw when something visible changed (keeps animations smooth)
   buddyKey = key;
   $('buddy').innerHTML = buddySVG(st.animal, mood, { acc: st.equipped, hue: hueOf() });
+  const aura = $('buddyAura');
+  aura.className = 'buddy-aura aura-' + mood;
+  aura.innerHTML = auraHTML(mood);
 }
 
 /* ---------------- Focus screen ---------------- */
@@ -79,7 +82,6 @@ function buildHome() {
   }
   const over = s.host ? `<div class="mini">For this session, treat <b>${esc(s.host)}</b> as: ${['productive', 'neutral', 'distracting'].map(c => `<button data-a="override" data-cat="${c}">${c}</button>`).join('')}</div>` : '';
   return `<div class="goal">${esc(s.goal)}</div><div class="tm" id="tm"></div>
-    <div class="hrow"><span>Health</span><div class="bar"><i id="hbar"></i></div><b id="hnum"></b></div>
     <div id="warn" class="warn" hidden></div>
     <div class="site">Current site: <b>${esc(s.host || 'not a website')}</b> <span id="catlbl" class="tag"></span></div>${over}
     <div class="btns">
@@ -92,11 +94,15 @@ function buildHome() {
 function updateDyn() {
   const s = st.session;
   if ($('prog')) $('prog').textContent = Math.floor(todayMs() / MIN);
+  const h = s ? health(s) : 100;
+  const hbar = $('hbar'), hnum = $('hnum'), buddyState = $('buddyState');
+  hbar.style.width = h + '%';
+  hbar.style.background = h >= 76 ? '#5BC47A' : h >= 51 ? '#F2C94C' : h >= 26 ? '#F2994A' : '#EB5757';
+  hbar.parentElement.setAttribute('aria-valuenow', h);
+  hnum.textContent = h + '% health';
+  buddyState.textContent = !s ? 'Ready to focus!' : s.status === 'fainted' ? 'I need a rescue' : s.status === 'paused' ? 'Resting with you' : h >= 76 ? 'Doing great!' : h >= 51 ? 'Still going!' : h >= 26 ? 'Stay with me!' : 'Let\'s get back on track!';
   if (!s || s.status === 'fainted') return;
   $('tm').textContent = fmt(s.plannedMs - s.activeMs);
-  const h = health(s);
-  $('hnum').textContent = h; $('hbar').style.width = h + '%';
-  $('hbar').style.background = h >= 76 ? '#5BC47A' : h >= 51 ? '#F2C94C' : h >= 26 ? '#F2994A' : '#EB5757';
   const c = $('catlbl'); c.textContent = s.cat; c.className = 'tag ' + s.cat;
   const w = $('warn');
   if (s.cat === 'distracting' && s.status === 'running') {
@@ -114,22 +120,23 @@ function renderHome() {
 /* ---------------- Shop ---------------- */
 function card(pv, name, btn, on) { return `<div class="item ${on ? 'on' : ''}"><div class="pv">${pv}</div><b>${esc(name)}</b>${btn}</div>`; }
 function renderShop() {
-  const sig = JSON.stringify([st.points, st.items, st.animals, st.animal, st.equipped, st.color]);
+  const demoUnlocked = demoItemsUnlocked(st);
+  const sig = JSON.stringify([st.points, st.items, st.animals, st.animal, st.equipped, st.color, demoUnlocked]);
   if (sig === shopSig) return;
   shopSig = sig;
   const acc = ITEMS.filter(i => i.type === 'acc').map(i => {
-    const own = st.items.includes(i.id), on = st.equipped === i.id;
+    const own = st.items.includes(i.id) || demoUnlocked, on = st.equipped === i.id;
     return card(buddySVG(st.animal, 'happy', { acc: i.id }), i.name, `<button data-a="item" data-id="${i.id}" ${!own && st.points < i.cost ? 'disabled' : ''}>${on ? 'Remove' : own ? 'Wear' : '⭐ ' + i.cost}</button>`, on);
   }).join('');
   const col = ITEMS.filter(i => i.type === 'color').map(i => {
-    const own = st.items.includes(i.id), on = st.color === i.id;
+    const own = st.items.includes(i.id) || demoUnlocked, on = st.color === i.id;
     return card(buddySVG(st.animal, 'happy', { hue: i.hue }), i.name.replace(' color', ''), `<button data-a="item" data-id="${i.id}" ${!own && st.points < i.cost ? 'disabled' : ''}>${on ? 'Remove' : own ? 'Use' : '⭐ ' + i.cost}</button>`, on);
   }).join('');
   const ani = ANIMALS.map(a => {
-    const own = st.animals.includes(a[0]), on = st.animal === a[0];
+    const own = st.animals.includes(a[0]) || demoUnlocked, on = st.animal === a[0];
     return card(buddySVG(a[0], 'happy'), a[1], `<button data-a="animal" data-id="${a[0]}" ${!own && st.points < ANIMAL_COST ? 'disabled' : ''}>${on ? 'Active' : own ? 'Choose' : '⭐ ' + ANIMAL_COST}</button>`, on);
   }).join('');
-  $('shop').innerHTML = `<div class="card"><b>Treat</b> costs ${TREAT_COST} points and restores ${TREAT_HEAL} health. Use it from the Focus screen during a session.</div>
+  $('shop').innerHTML = `${demoUnlocked ? '<div class="result"><b>Demo unlocks are on.</b> Every animal, accessory, and color is free to try.</div>' : ''}<div class="card"><b>Treat</b> costs ${TREAT_COST} points and restores ${TREAT_HEAL} health. Use it from the Focus screen during a session.</div>
     <h3>Accessories (wear one at a time)</h3><div class="grid">${acc}</div>
     <h3>Special colors</h3><div class="grid">${col}</div>
     <h3>New animals</h3><div class="grid">${ani}</div>`;
@@ -140,7 +147,8 @@ function renderSettings() {
   const s = st.settings;
   $('settings').innerHTML = `<div class="card">
     <div class="row"><input type="checkbox" id="sSound" ${s.sound ? 'checked' : ''}><label for="sSound" style="margin:0">Play sounds (off by default)</label></div>
-    <div class="row"><input type="checkbox" id="sDemo" ${s.demo ? 'checked' : ''}><label for="sDemo" style="margin:0">Demo mode: time runs 30x faster, 1 minute sessions allowed</label></div></div>
+    <div class="row"><input type="checkbox" id="sDemo" ${s.demo ? 'checked' : ''}><label for="sDemo" style="margin:0">Demo mode: time runs 30x faster, 1 minute sessions allowed</label></div>
+    <div class="row suboption"><input type="checkbox" id="sDemoUnlocks" ${s.demoUnlocks ? 'checked' : ''}><label for="sDemoUnlocks" style="margin:0">Unlock all animals, accessories, and colors while demo mode is on</label></div></div>
     <label for="sProd">Productive sites (one per line)</label><textarea id="sProd">${esc(s.productive.join('\n'))}</textarea>
     <label for="sDist">Distracting sites (one per line)</label><textarea id="sDist">${esc(s.distracting.join('\n'))}</textarea>
     <p class="muted">Sites on neither list are neutral and do nothing. YouTube and Reddit start as neutral because they can contain study material. Only totals and settings are stored on your computer, never your browsing history.</p>
@@ -185,7 +193,7 @@ document.addEventListener('click', e => {
   }
   if (a === 'saveSettings') {
     const lines = id => $(id).value.split('\n');
-    send({ type: 'settings', settings: { sound: $('sSound').checked, demo: $('sDemo').checked, productive: lines('sProd'), distracting: lines('sDist') } });
+    send({ type: 'settings', settings: { sound: $('sSound').checked, demo: $('sDemo').checked, demoUnlocks: $('sDemoUnlocks').checked, productive: lines('sProd'), distracting: lines('sDist') } });
     return toast('Settings saved');
   }
   if (a === 'reset') { if (confirm('Reset your points, animals, and streak? This cannot be undone.')) send({ type: 'reset' }); return; }

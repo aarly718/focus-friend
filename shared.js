@@ -39,7 +39,7 @@ const daysBetween = (a, b) => dayNum(b) - dayNum(a);
 const DEFAULT_STATE = () => ({
   points: 0, best: 0, totalMin: 0,
   animal: 'retriever', animals: ['retriever'], items: [], equipped: null, color: null,
-  settings: { sound: false, demo: false, productive: DEFAULT_PRODUCTIVE.slice(), distracting: DEFAULT_DISTRACTING.slice() },
+  settings: { sound: false, demo: false, demoUnlocks: false, productive: DEFAULT_PRODUCTIVE.slice(), distracting: DEFAULT_DISTRACTING.slice() },
   streak: { count: 0, last: null },
   day: { date: null, prodMs: 0, secured: false },
   session: null, last: null, lastSessionDate: null, inactiveNotified: null,
@@ -50,6 +50,7 @@ async function loadState() {
   return { ...d, ...s, settings: { ...d.settings, ...(s.settings || {}) } };
 }
 const saveState = st => chrome.storage.local.set({ ff: st });
+const demoItemsUnlocked = st => !!(st.settings.demo && st.settings.demoUnlocks);
 function evt(st, type, text) {
   st.eid = (st.eid || 0) + 1;
   st.events = (st.events || []).concat({ id: st.eid, type, text }).slice(-8);

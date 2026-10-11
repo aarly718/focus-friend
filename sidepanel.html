@@ -16,7 +16,21 @@
     <section id="home">
       <div class="buddy-wrap">
         <div id="speech"></div>
-        <div id="buddy"></div>
+        <div class="buddy-stage">
+          <div class="buddy-home" aria-hidden="true">
+            <div class="buddy-home-glow"></div>
+            <div class="buddy-home-floor"></div>
+          </div>
+          <div id="buddyAura" class="buddy-aura" aria-hidden="true"></div>
+          <div id="buddy"></div>
+        </div>
+        <div class="buddy-meta">
+          <div id="buddyState">Ready to focus!</div>
+          <div class="buddy-health">
+            <div class="bar" role="progressbar" aria-label="Buddy health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><i id="hbar"></i></div>
+            <span id="hnum">100% health</span>
+          </div>
+        </div>
       </div>
       <div id="homeBody"></div>
     </section>

@@ -3,9 +3,9 @@ const fs = require('fs'), vm = require('vm'), assert = require('assert');
 const ctx = { chrome: { storage: { local: { get: async () => ({}), set: async () => {} } } }, console, URL };
 vm.createContext(ctx);
 const read = f => fs.readFileSync(__dirname + '/../' + f, 'utf8');
-vm.runInContext(read('shared.js') + ';this.api={advance,settle,health,classify,hostOf,DEFAULT_STATE,MIN,GRACE,ANIMAL_IDS,streak:shiftDay};', ctx);
-vm.runInContext(read('art.js') + ';this.art={ANIMALS,buddySVG};', ctx);
-const { advance, settle, health, classify, hostOf, DEFAULT_STATE, MIN, GRACE, ANIMAL_IDS } = ctx.api, { ANIMALS, buddySVG } = ctx.art;
+vm.runInContext(read('shared.js') + ';this.api={advance,settle,health,classify,hostOf,DEFAULT_STATE,MIN,GRACE,ANIMAL_IDS,ITEMS,demoItemsUnlocked,streak:shiftDay};', ctx);
+vm.runInContext(read('art.js') + ';this.art={ANIMALS,buddySVG,auraHTML};', ctx);
+const { advance, settle, health, classify, hostOf, DEFAULT_STATE, MIN, GRACE, ANIMAL_IDS, ITEMS, demoItemsUnlocked } = ctx.api, { ANIMALS, buddySVG, auraHTML } = ctx.art;
 
 function session(mins, extra) {
   const st = DEFAULT_STATE();
@@ -16,6 +16,8 @@ function run(st, ms, step = 5000) { let t = st.session ? st.session.lastTick : 0
 
 // websites
 const st0 = DEFAULT_STATE();
+assert.equal(demoItemsUnlocked(st0), false);
+st0.settings.demo = true; st0.settings.demoUnlocks = true; assert.equal(demoItemsUnlocked(st0), true);
 assert.equal(classify(hostOf('https://www.tiktok.com/foo'), st0), 'distracting');
 assert.equal(classify(hostOf('https://docs.google.com/d/1'), st0), 'productive');
 assert.equal(classify(hostOf('https://www.youtube.com/watch'), st0), 'neutral');
@@ -42,6 +44,13 @@ assert.equal(d.streak.count, 1); assert.equal(d.day.secured, true);
 // every animal has art in every mood, and ids match the shop list
 assert.deepEqual(ANIMALS.map(x => x[0]), ANIMAL_IDS);
 for (const an of ANIMALS) for (const m of ['happy', 'okay', 'sad', 'panic', 'fainted', 'sleeping']) {
-  const svg = buddySVG(an[0], m, { acc: 'glasses', hue: 90 }); assert.ok(svg.startsWith('<svg') && svg.endsWith('</svg>'), an[0] + ' ' + m);
+  for (const opt of [{}, ...ITEMS.filter(i => i.type === 'acc').map(i => ({ acc: i.id })), ...ITEMS.filter(i => i.type === 'color').map(i => ({ hue: i.hue }))]) {
+    const svg = buddySVG(an[0], m, opt); assert.ok(svg.startsWith('<svg') && svg.endsWith('</svg>'), an[0] + ' ' + m);
+  }
 }
+assert.ok(auraHTML('happy').includes('heart'));
+assert.equal(auraHTML('okay'), '');
+assert.ok(auraHTML('sad').includes('drop'));
+assert.ok(auraHTML('panic').includes('alert'));
+assert.ok(auraHTML('fainted').includes('faint-star'));
 console.log('All tests passed (' + ANIMALS.length + ' animals x 6 moods).');
