@@ -2,7 +2,7 @@
 
 A Chrome extension that turns studying into a game. Pick a session length and a cute floating animal buddy keeps you company on ordinary webpages, while Chrome's side panel holds the full dashboard. Wander onto a distracting site and your buddy gets nervous and loses health. Finish the timer to earn points, then spend them on accessories, colors, and new animals.
 
-**Judge demo:** enable Demo mode and demo unlocks, choose **Prepare judge demo**, start a short session, visit one productive and one distracting site, then use **Demo: next mood** to show sad → stressed → final warning → fainted. Rescue the buddy, show the nearly-complete streak, and briefly open the Shop to show pets and accessories.
+**Judge demo:** enable Demo mode and demo unlocks, choose **Prepare judge demo**, start a short session, visit one productive and one distracting site, then use **Demo: next mood** to show okay → sad → stressed → final warning → fainted. Rescue the buddy, show the nearly-complete streak, and briefly open the Shop to show pets and accessories.
 
 ## Install (developer mode)
 
@@ -26,7 +26,7 @@ Real sessions are at least 15 minutes, which is slow for a live demo. In **Setti
 | Site categories | Productive, distracting, or neutral. Unlisted sites (including YouTube and Reddit by default) are neutral and do nothing. Edit the lists in Settings, or override one site for the current session from the Focus screen |
 | Warning | Entering a distracting site shows "Your buddy is getting distracted!" and starts a 10-second grace period. Health only drops after that, and stops as soon as you leave |
 | Health | `health = 100 - (distracted time / allowed distraction time) x 100`, where allowed distraction time is 20% of the session (25 min session: 5 min, 60 min: 12 min, 120 min: 24 min) |
-| Moods | 76-100 happy, 51-75 okay, 26-50 sad, 1-25 panicking, 0 fainted (paused = sleeping) |
+| Moods | 76-100 happy, 51-75 okay, 26-50 sad, 1-25 panicking, 0 fainted. Paused and just-completed sessions keep the current expression and add a resting animation plus sleep cue |
 | Points | `base = productive minutes`, `bonus = round(base x final health / 200)`, `total = base + bonus`. Only productive and neutral time counts. Points are awarded only when the timer finishes |
 | Points are never lost | A failed session earns nothing, but nothing is taken away. Purchases are permanent |
 | Fainting | The session pauses. Spend 20 points to rescue the buddy (restores 30 health, once per session) or end the session |
@@ -35,7 +35,7 @@ Real sessions are at least 15 minutes, which is slow for a live demo. In **Setti
 | Pausing | Allowed. Paused time never counts toward points or the streak |
 | Closing Chrome | Pauses the session. Reopening the panel keeps the timer |
 | Emergency exit | "End session" earns no points, and minutes already focused still count toward the streak |
-| Notifications | On entering a distracting site and at mood thresholds: sad (50%), panicking (25%), final warning (10%), and fainted (0%). Each alert gets a fresh silent system banner. Fainting mutes notifications until rescue or a new session |
+| Notifications | On entering a distracting site and at mood thresholds: okay (75%), sad (50%), panicking (25%), final warning (10%), and fainted (0%). Each alert gets a fresh silent system banner. Fainting mutes notifications until rescue or a new session |
 | Sounds | Muted by default, with a speaker button and volume slider in the side panel and a mute button on the floating buddy. Meaningful moods and events have synthesized sounds; routine clicks, pause, and resume stay quiet |
 | Privacy | Only totals and settings are stored (`chrome.storage.local`). Browsing history is never saved |
 

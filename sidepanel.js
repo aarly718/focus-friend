@@ -16,6 +16,7 @@ function todayMs() { return st.day.date === todayStr() ? st.day.prodMs : 0; }
 const SAY = {
   warn: ["Hey... where are you going?", "Psst, that's not studying!", "Come back to me!"],
   five: ["Five minutes left, you got this!"], complete: ["Yay, you did it!", "So proud of you!"],
+  moodOkay: ["We can still turn this around!"],
   moodSad: ["I feel sad. Stay focused!"], moodPanic: ["I'm stressed! Return to your work."],
   moodFinal: ["Hurry! I'm about to faint!"], moodFaint: ["x_x ...help!"],
   streak: ["Streak secured!"], treat: ["Yum, thank you!"], rescue: ["You saved me!"], demo: ["Judge demo ready!"]
@@ -31,26 +32,29 @@ function toast(text, bad) {
 }
 function onEvent(e) {
   say(e.type === 'start' ? animal()[2] + " Let's focus!" : pick(SAY[e.type] || ['Hi!']));
-  if (['five', 'complete', 'moodSad', 'moodPanic', 'moodFinal', 'moodFaint', 'streak', 'demo'].includes(e.type))
+  if (['five', 'complete', 'moodOkay', 'moodSad', 'moodPanic', 'moodFinal', 'moodFaint', 'streak', 'demo'].includes(e.type))
     toast(e.text, ['moodPanic', 'moodFinal', 'moodFaint'].includes(e.type));
 }
 
 function moodOf() {
   const s = st.session;
-  if (!s) return 'happy';
+  if (!s) {
+    const h = st.last && st.last.ok ? st.last.health : 100;
+    return h >= 76 ? 'happy' : h >= 51 ? 'okay' : h >= 26 ? 'sad' : h > 0 ? 'panic' : 'fainted';
+  }
   if (s.status === 'fainted') return 'fainted';
-  if (s.status === 'paused') return 'sleeping';
   const h = health(s);
   return h >= 76 ? 'happy' : h >= 51 ? 'okay' : h >= 26 ? 'sad' : 'panic';
 }
 function renderBuddy() {
-  const mood = moodOf(), key = [st.animal, mood, st.equipped, st.color].join('|');
+  const mood = moodOf(), resting = !!((st.session && st.session.status === 'paused') || (!st.session && st.last && st.last.ok));
+  const key = [st.animal, mood, resting, st.equipped, st.color].join('|');
   if (key === buddyKey) return;               // only redraw when something visible changed (keeps animations smooth)
   buddyKey = key;
-  $('buddy').innerHTML = buddySVG(st.animal, mood, { acc: st.equipped, hue: hueOf() });
+  $('buddy').innerHTML = buddySVG(st.animal, mood, { acc: st.equipped, hue: hueOf(), sleeping: resting });
   const aura = $('buddyAura');
-  aura.className = 'buddy-aura aura-' + mood;
-  aura.innerHTML = auraHTML(mood);
+  aura.className = 'buddy-aura aura-' + (resting ? 'sleeping' : mood);
+  aura.innerHTML = resting ? '' : auraHTML(mood);
 }
 
 /* ---------------- Focus screen ---------------- */

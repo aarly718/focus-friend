@@ -177,12 +177,12 @@ const LEGACY_ANIMALS = [
 function accessory(id, g) {
   const x = g.x || 60, t = g.t, e = g.e, d = g.d, scale = g.s || 1;
   if (id === 'bow') {
-    const bx = g.bx || x, bt = g.bt || t, bs = g.bs || scale;
+    const bx = g.bx || x - 15, bt = g.bt || t + 3, bs = g.bs || scale * .9;
     return '<g transform="rotate(' + (g.br == null ? -10 : g.br) + ' ' + bx + ' ' + bt + ') translate(' + bx + ' ' + bt + ') scale(' + bs + ') translate(' + (-bx) + ' ' + (-bt) + ')">' + Pa('M' + bx + ' ' + (bt + 1) + ' L' + (bx - 16) + ' ' + (bt - 8) + ' L' + (bx - 16) + ' ' + (bt + 10) + 'Z', '#FF6F91') + Pa('M' + bx + ' ' + (bt + 1) + ' L' + (bx + 16) + ' ' + (bt - 8) + ' L' + (bx + 16) + ' ' + (bt + 10) + 'Z', '#FF6F91') + Ci(bx, bt + 1, 4.5, '#E0446E') + '</g>';
   }
   if (id === 'glasses') {
     const gx = g.gx || x, ge = g.ge || e, gs = g.gs || scale;
-    const f = 'rgba(255,255,255,.35)', s = 'stroke="#2b2b2b" stroke-width="2"', r = 7.5 * gs;
+    const f = 'rgba(255,255,255,.18)', s = 'stroke="#2b2b2b" stroke-width="1.8"', r = 7.2 * gs;
     return Ci(gx - d, ge, r, f, s) + Ci(gx + d, ge, r, f, s) + St('M' + (gx - d + r) + ' ' + ge + ' L' + (gx + d - r) + ' ' + ge, '#2b2b2b', 2);
   }
   if (id === 'hat') {
@@ -222,15 +222,15 @@ const PET_SHEETS = {
 
 // [id, display name, sound, sheet, row, accessory anchors]
 const ANIMALS = [
-  ['retriever', 'Golden retriever', 'Woof!', 'dogs', 0, { x: 60, t: 35, e: 58, d: 11, s: 1.00, bx: 44, bt: 42, bs: .88, br: -12, hr: -8 }],
+  ['retriever', 'Golden retriever', 'Woof!', 'dogs', 0, { x: 60, t: 35, e: 58, d: 11, s: 1.00, bx: 40, bt: 36, bs: .82, br: -12, hr: -8 }],
   ['shepherd', 'German shepherd', 'Bark!', 'dogs', 1, { x: 60, t: 31, e: 58, d: 12, s: .94, bt: 35, br: -5, hr: -5 }],
   ['corgi', 'Corgi', 'Yip!', 'dogs', 2, { x: 60, t: 33, e: 59, d: 12, s: .92, bt: 36, br: -7, hr: -6 }],
   ['husky', 'Husky', 'Awoo!', 'dogs', 3, { x: 60, t: 31, e: 57, d: 12, s: .94, bt: 35, br: -5, hr: -4 }],
-  ['dalmatian', 'Dalmatian', 'Woof!', 'dogs', 4, { x: 60, t: 36, e: 59, d: 11, s: .98, bx: 44, bt: 42, bs: .88, br: -12, hr: -8 }],
-  ['pug', 'Pug', 'Snort!', 'small', 0, { x: 60, t: 39, e: 60, d: 12, s: .90, bx: 44, bt: 42, ge: 56, br: -10, hr: -7 }],
+  ['dalmatian', 'Dalmatian', 'Woof!', 'dogs', 4, { x: 60, t: 34, e: 59, d: 11, s: .96, bx: 40, bt: 34, bs: .80, br: -12, hr: -8 }],
+  ['pug', 'Pug', 'Snort!', 'small', 0, { x: 60, t: 36, e: 56, d: 12, s: .86, bx: 40, bt: 34, bs: .76, ge: 56, br: -10, hr: -7 }],
   ['tabby', 'Orange tabby', 'Meow!', 'small', 1, { x: 60, t: 33, e: 58, d: 11, s: .92, bx: 47, bt: 36, br: -8, hr: -4 }],
-  ['blackcat', 'Black cat', 'Mrrp!', 'small', 2, { x: 60, t: 33, e: 58, d: 11, s: .92, bx: 47, bt: 36, br: -8, hr: -4 }],
-  ['bunny', 'Bunny', 'Squeak!', 'small', 3, { x: 60, t: 25, e: 60, d: 11, s: .82, bx: 47, bt: 35, br: -6, hr: -2 }],
+  ['blackcat', 'Black cat', 'Mrrp!', 'small', 2, { x: 60, t: 31, e: 57, d: 11, s: .88, bx: 40, bt: 31, bs: .78, br: -8, hr: -4 }],
+  ['bunny', 'Bunny', 'Squeak!', 'small', 3, { x: 60, t: 25, e: 60, d: 11, s: .80, bx: 39, bt: 28, bs: .70, br: -6, hr: -2 }],
   ['fox', 'Fox', 'Yip yip!', 'small', 4, { x: 60, t: 31, e: 57, d: 12, s: .92, bt: 35, br: -6, hr: -5 }],
   ['wolf', 'Wolf', 'Howl!', 'forest', 0, { x: 60, t: 31, e: 57, d: 12, s: .94, bt: 35, br: -6, hr: -5 }],
   ['panda', 'Panda', 'Munch!', 'forest', 1, { x: 60, t: 37, e: 59, d: 12, s: .96, bx: 44, bt: 39, bs: .86, br: -10, hr: -8 }],
@@ -249,7 +249,7 @@ const ANIMALS = [
   ['monkey', 'Monkey', 'Ooh ooh!', 'farm', 4, { x: 60, t: 39, e: 60, d: 12, s: .88, bx: 43, bt: 42, bs: .82, ge: 58, br: -10, hr: -7 }],
   ['penguin', 'Penguin', 'Honk!', 'birds', 0, { x: 60, t: 35, e: 57, d: 10, s: .92, bx: 45, bt: 39, bs: .82, br: -9, hr: -6 }],
   ['owl', 'Owl', 'Hoo!', 'birds', 1, { x: 60, t: 30, e: 59, d: 13, s: .86, br: -5, hr: -3 }],
-  ['chicken', 'Chicken', 'Bawk!', 'birds', 2, { x: 60, t: 27, e: 54, d: 10, s: .82, bx: 45, bt: 37, bs: .76, ge: 52, ht: 31, br: -7, hr: -2 }],
+  ['chicken', 'Chicken', 'Bawk!', 'birds', 2, { x: 60, t: 27, e: 54, d: 10, s: .78, bx: 37, bt: 33, bs: .68, ge: 52, gs: .72, hx: 72, ht: 30, hs: .70, br: -7, hr: 5 }],
   ['duck', 'Duck', 'Quack!', 'birds', 3, { x: 60, t: 34, e: 57, d: 11, s: .90, bx: 45, bt: 38, bs: .80, ge: 56, ht: 36, br: -9, hr: -6 }],
   ['frog', 'Frog', 'Ribbit!', 'birds', 4, { x: 60, t: 28, e: 47, d: 16, s: .82, bt: 38, ht: 36, br: -4, hr: -2 }]
 ];
@@ -270,6 +270,8 @@ function buddySVG(id, mood, opt) {
   const hue = opt.hue ? 'filter:hue-rotate(' + opt.hue + 'deg) saturate(1.15);' : '';
   const anchors = Object.assign({ t: 36, e: 59, d: 11 }, animal[5] || {});
   const acc = opt.acc ? '<svg class="buddy-accessory" viewBox="0 0 120 120" aria-hidden="true">' + accessory(opt.acc, anchors) + '</svg>' : '';
-  const sleep = mood === 'sleeping' ? '<span class="buddy-sleep" aria-hidden="true">z<sup>z</sup></span>' : '';
-  return '<span class="buddy-art mood-' + mood + '" role="img" aria-label="' + animal[1] + ', ' + mood + '"><span class="buddy-crop"><img class="buddy-sheet" src="' + assetURL(sheet.file) + '" alt="" draggable="false" style="width:' + width.toFixed(4) + '%;left:' + left.toFixed(4) + '%;top:' + top.toFixed(4) + '%;' + hue + '"></span>' + acc + sleep + '</span>';
+  const sleeping = !!opt.sleeping || mood === 'sleeping';
+  const sleep = sleeping ? '<span class="buddy-sleep" aria-hidden="true">z<sup>z</sup></span>' : '';
+  const label = animal[1] + ', ' + mood + (sleeping ? ', resting' : '');
+  return '<span class="buddy-art mood-' + mood + (sleeping ? ' is-sleeping' : '') + '" role="img" aria-label="' + label + '"><span class="buddy-crop"><img class="buddy-sheet" src="' + assetURL(sheet.file) + '" alt="" draggable="false" style="width:' + width.toFixed(4) + '%;left:' + left.toFixed(4) + '%;top:' + top.toFixed(4) + '%;' + hue + '"></span>' + acc + sleep + '</span>';
 }

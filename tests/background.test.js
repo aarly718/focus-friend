@@ -41,21 +41,25 @@ const { act, commit, evt, DEFAULT_STATE, MIN, allowedMs } = ctx.api;
   assert.equal(notifications.length, 1);
   assert.equal(notifications[0].id, '');
   assert.equal(notifications[0].silent, true);
-  evt(saved, 'moodSad', 'Your buddy is sad. Stay focused!');
+  evt(saved, 'moodOkay', 'It\'s not too late—your buddy can be happy again!');
   await commit(saved);
   assert.equal(notifications.length, 2);
-  assert.equal(notifications[1].id, '');
-  assert.equal(notifications[1].message, 'Your buddy is sad. Stay focused!');
+  assert.equal(notifications[1].message, 'It\'s not too late—your buddy can be happy again!');
+  evt(saved, 'moodSad', 'Your buddy is sad. Stay focused!');
+  await commit(saved);
+  assert.equal(notifications.length, 3);
+  assert.equal(notifications[2].id, '');
+  assert.equal(notifications[2].message, 'Your buddy is sad. Stay focused!');
 
   // A fainted session suppresses later warnings until it is rescued.
   saved.session = { notificationsMuted: true };
   evt(saved, 'warn', 'muted');
   await commit(saved);
-  assert.equal(notifications.length, 2);
+  assert.equal(notifications.length, 3);
   evt(saved, 'moodFaint', 'Your buddy fainted. Rescue it or end the session.');
   await commit(saved);
-  assert.equal(notifications.length, 3);
-  assert.equal(notifications[2].message, 'Your buddy fainted. Rescue it or end the session.');
+  assert.equal(notifications.length, 4);
+  assert.equal(notifications[3].message, 'Your buddy fainted. Rescue it or end the session.');
 
   // Custom audio is muted by default, then uses the offscreen player at the saved volume.
   saved = DEFAULT_STATE();
@@ -71,7 +75,7 @@ const { act, commit, evt, DEFAULT_STATE, MIN, allowedMs } = ctx.api;
   saved.settings.demo = true;
   saved.session = { goal: 't', plannedMs: 15 * MIN, activeMs: 0, prodMs: 0, distMs: 3 * MIN,
     graceLeft: 0, status: 'fainted', cat: 'distracting', host: '', lastTick: Date.now(), overrides: {},
-    rescued: false, fiveSent: false, notifyStage: 4, notificationsMuted: true };
+    rescued: false, fiveSent: false, notifyStage: 5, notificationsMuted: true };
   assert.equal(saved.session.distMs, allowedMs(saved.session));
   await act({ type: 'rescue' });
   assert.equal(saved.session.status, 'running');
@@ -82,9 +86,9 @@ const { act, commit, evt, DEFAULT_STATE, MIN, allowedMs } = ctx.api;
   saved = DEFAULT_STATE(); saved.points = 10;
   saved.session = { goal: 't', plannedMs: 25 * MIN, activeMs: 0, prodMs: 0, distMs: 2.5 * MIN,
     graceLeft: 0, status: 'running', cat: 'neutral', host: '', lastTick: Date.now(), overrides: {},
-    rescued: false, fiveSent: false, notifyStage: 1, notificationsMuted: false };
+    rescued: false, fiveSent: false, notifyStage: 2, notificationsMuted: false };
   await act({ type: 'treat' });
-  assert.equal(saved.session.notifyStage, 0);
+  assert.equal(saved.session.notifyStage, 1);
   assert.equal(saved.points, 0);
 
   // Judge preparation is persistent and leaves one focused minute to earn the streak.

@@ -13,6 +13,7 @@ const DEMO_SPEED = 30;        // demo mode makes session time run 30x faster
 const DEMO_DAMAGE_SPEED = 10; // slower than the demo clock so each mood remains visible
 const MOOD_ALERTS = [
   null,
+  { type: 'moodOkay', text: 'It\'s not too late—your buddy can be happy again!' },
   { type: 'moodSad', text: 'Your buddy is sad. Stay focused!' },
   { type: 'moodPanic', text: 'Your buddy is stressed! Return to your work.' },
   { type: 'moodFinal', text: 'Hurry! Your buddy is about to faint!' },
@@ -91,7 +92,7 @@ function health(s) {
 }
 
 function moodAlertStage(h) {
-  return h <= 0 ? 4 : h <= 10 ? 3 : h <= 25 ? 2 : h <= 50 ? 1 : 0;
+  return h <= 0 ? 5 : h <= 10 ? 4 : h <= 25 ? 3 : h <= 50 ? 2 : h <= 75 ? 1 : 0;
 }
 
 // Emits one alert only when health crosses into a worse mood band. If a clock
@@ -103,7 +104,7 @@ function updateMoodAlert(st) {
   if (next <= previous) return;
   s.notifyStage = next;
   evt(st, MOOD_ALERTS[next].type, MOOD_ALERTS[next].text);
-  if (next === 4) s.notificationsMuted = true;
+  if (next === 5) s.notificationsMuted = true;
 }
 
 // Moves the clock forward. All timing is computed from timestamps, so it survives the
@@ -168,7 +169,7 @@ const ANIMAL_PITCH = { retriever: 1, shepherd: .85, corgi: 1.05, husky: .95, dal
   fox: 1.15, wolf: .75, panda: .8, polarbear: .65, brownbear: .7, koala: .9, raccoon: 1.1, redpanda: 1.25, otter: 1.2, capybara: .8, pig: .95,
   cow: .6, sheep: .95, lion: .6, tiger: .7, monkey: 1.2, penguin: 1, owl: .85, chicken: 1.3, duck: 1.15, frog: 1.1 };
 const EVENT_SOUND = { warn: 'warn', five: 'five', complete: 'complete', streak: 'streak', treat: 'treat', rescue: 'rescue', start: 'start',
-  moodSad: 'sad', moodPanic: 'panic', moodFinal: 'final', moodFaint: 'faint' };
+  moodOkay: 'okay', moodSad: 'sad', moodPanic: 'panic', moodFinal: 'final', moodFaint: 'faint' };
 const MOOD_SOUND = { happy: 'happy', okay: 'okay', sad: 'sad', panic: 'panic', fainted: 'faint', sleeping: 'sleeping' };
 const SOUND_PRIORITY = ['faint', 'final', 'complete', 'streak', 'rescue', 'panic', 'warn', 'sad', 'five', 'start', 'treat', 'okay', 'happy', 'sleeping'];
 
@@ -187,7 +188,7 @@ function planSounds(st, freshEvents, prevMood) {
   const found = new Set();
   const alertsMuted = !!(st.session && st.session.notificationsMuted);
   for (const e of freshEvents) {
-    if (alertsMuted && ['warn', 'moodSad', 'moodPanic', 'moodFinal'].includes(e.type)) continue;
+    if (alertsMuted && ['warn', 'moodOkay', 'moodSad', 'moodPanic', 'moodFinal'].includes(e.type)) continue;
     if (EVENT_SOUND[e.type]) found.add(EVENT_SOUND[e.type]);
   }
   const mood = moodKey(st);

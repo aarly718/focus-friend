@@ -55,7 +55,7 @@ function commit(st) {
   const muted = !!(st.session && st.session.notificationsMuted);
   const notificationEvent = fresh.filter(e => {
     if (e.type === 'moodFaint') return true;
-    return !muted && ['warn', 'moodSad', 'moodPanic', 'moodFinal'].includes(e.type);
+    return !muted && ['warn', 'moodOkay', 'moodSad', 'moodPanic', 'moodFinal'].includes(e.type);
   }).pop();
   if (notificationEvent)
     chrome.notifications.create('', { type: 'basic', iconUrl: 'icons/icon128.png', title: 'Focus Friend', message: notificationEvent.text, priority: 2, silent: true })
@@ -115,10 +115,10 @@ async function act(m) {
       break;
     case 'demoMood':
       if (s && s.status === 'running' && st.settings.demo) {
-        const next = Math.min(4, (s.notifyStage || moodAlertStage(health(s))) + 1);
-        const healthByStage = [100, 50, 25, 10, 0];
+        const next = Math.min(5, (s.notifyStage || moodAlertStage(health(s))) + 1);
+        const healthByStage = [100, 75, 50, 25, 10, 0];
         s.distMs = allowedMs(s) * (1 - healthByStage[next] / 100);
-        if (next === 4) s.status = 'fainted';
+        if (next === 5) s.status = 'fainted';
         updateMoodAlert(st);
       }
       break;

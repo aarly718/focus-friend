@@ -30,7 +30,7 @@
     .mood-happy.buddy-art { animation:pet-breathe 2.4s ease-in-out infinite; }
     .mood-sad.buddy-art { animation:pet-sigh 2.8s ease-in-out infinite; }
     .mood-panic.buddy-art { animation:pet-startle .42s ease-in-out infinite alternate; }
-    .mood-sleeping.buddy-art { animation:pet-sleep 3s ease-in-out infinite; }
+    .is-sleeping.buddy-art { animation:pet-sleep 3s ease-in-out infinite; }
     #card.mini #pet-stage { width:52px; height:52px; margin:0; }
     #card.mini #pet-circle { width:52px; height:52px; }
     #card.mini #buddy { width:46px; height:46px; bottom:3px; }
@@ -144,9 +144,11 @@
   const hueOf = () => { const item = st && ITEMS.find(i => i.id === st.color); return item ? item.hue : 0; };
   function moodOf() {
     const s = st && st.session;
-    if (!s) return 'happy';
+    if (!s) {
+      const h = st && st.last && st.last.ok ? st.last.health : 100;
+      return h >= 76 ? 'happy' : h >= 51 ? 'okay' : h >= 26 ? 'sad' : h > 0 ? 'panic' : 'fainted';
+    }
     if (s.status === 'fainted') return 'fainted';
-    if (s.status === 'paused') return 'sleeping';
     const h = health(s);
     return h >= 76 ? 'happy' : h >= 51 ? 'okay' : h >= 26 ? 'sad' : 'panic';
   }
@@ -162,12 +164,13 @@
     muteButton.setAttribute('aria-label', muteButton.title);
     openButton.textContent = panelState.open && panelState.canClose ? 'Close Focus Friend' : 'Open Focus Friend';
     openButton.title = panelState.open && !panelState.canClose ? 'Use Chrome\'s side-panel control to close' : '';
-    const mood = moodOf(), key = [st.animal, mood, st.equipped, st.color].join('|');
+    const mood = moodOf(), resting = !!((st.session && st.session.status === 'paused') || (!st.session && st.last && st.last.ok));
+    const key = [st.animal, mood, resting, st.equipped, st.color].join('|');
     if (key !== buddyKey) {
       buddyKey = key;
-      buddy.innerHTML = buddySVG(st.animal, mood, { acc: st.equipped, hue: hueOf() });
-      buddyAura.className = 'buddy-aura aura-' + mood;
-      buddyAura.innerHTML = auraHTML(mood);
+      buddy.innerHTML = buddySVG(st.animal, mood, { acc: st.equipped, hue: hueOf(), sleeping: resting });
+      buddyAura.className = 'buddy-aura aura-' + (resting ? 'sleeping' : mood);
+      buddyAura.innerHTML = resting ? '' : auraHTML(mood);
     }
     const s = st.session;
     if (!s) {

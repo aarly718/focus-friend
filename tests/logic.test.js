@@ -34,14 +34,14 @@ assert.equal(a.session.notificationsMuted, true);
 
 // notifications happen once when crossing each mood threshold, not on every tick
 let alerts = session(25);
-for (const [pct, type] of [[50, 'moodSad'], [25, 'moodPanic'], [10, 'moodFinal']]) {
+for (const [pct, type] of [[75, 'moodOkay'], [50, 'moodSad'], [25, 'moodPanic'], [10, 'moodFinal']]) {
   alerts.session.distMs = alerts.session.plannedMs * .2 * (1 - pct / 100);
   updateMoodAlert(alerts);
   assert.equal(alerts.events.at(-1).type, type);
   const count = alerts.events.length;
   updateMoodAlert(alerts); assert.equal(alerts.events.length, count);
 }
-assert.deepEqual([51, 50, 25, 10, 0].map(moodAlertStage), [0, 1, 2, 3, 4]);
+assert.deepEqual([76, 75, 50, 25, 10, 0].map(moodAlertStage), [0, 1, 2, 3, 4, 5]);
 
 // points formula examples from the spec
 const pts = (mins, healthPct) => { const st = session(mins, { prodMs: mins * MIN, activeMs: mins * MIN, distMs: (100 - healthPct) / 100 * mins * MIN * 0.2 }); settle(st); return st.points; };
@@ -71,6 +71,8 @@ for (const an of ANIMALS) for (const m of ['happy', 'okay', 'sad', 'panic', 'fai
     assert.ok(art.includes('assets/pets/') && art.includes('buddy-sheet'), an[0] + ' approved asset');
     assert.ok(!art.includes('NaN') && !art.includes('undefined'), an[0] + ' valid accessory geometry');
   }
+  const resting = buddySVG(an[0], m === 'sleeping' ? 'okay' : m, { sleeping: true });
+  assert.ok(resting.includes('is-sleeping') && resting.includes('buddy-sleep'), an[0] + ' resting treatment');
 }
 assert.ok(auraHTML('happy').includes('heart'));
 assert.equal(auraHTML('okay'), '');
