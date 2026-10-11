@@ -1,5 +1,6 @@
 // Side panel UI. It never changes game state itself: it sends actions to background.js and renders what comes back.
 let st = null, tab = 'home', lastEvt = -1, sayTimer, toastTimer, buddyKey = '', homeSig = '', shopSig = '', ctx;
+const panelPort = chrome.runtime.connect({ name: 'focus-friend-panel' });
 let selectedMins = 25, customOpen = false;
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2, '0');
@@ -15,7 +16,9 @@ function todayMs() { return st.day.date === todayStr() ? st.day.prodMs : 0; }
 const SAY = {
   warn: ["Hey... where are you going?", "Psst, that's not studying!", "Come back to me!"],
   five: ["Five minutes left, you got this!"], complete: ["Yay, you did it!", "So proud of you!"],
-  faint: ["x_x ...help!"], streak: ["Streak secured!"], treat: ["Yum, thank you!"], rescue: ["You saved me!"]
+  moodSad: ["I feel sad. Stay focused!"], moodPanic: ["I'm stressed! Return to your work."],
+  moodFinal: ["Hurry! I'm about to faint!"], moodFaint: ["x_x ...help!"],
+  streak: ["Streak secured!"], treat: ["Yum, thank you!"], rescue: ["You saved me!"], demo: ["Judge demo ready!"]
 };
 
 function say(text) {
@@ -35,8 +38,9 @@ function beep(freqs) {   // optional sound (off by default)
 }
 function onEvent(e) {
   say(e.type === 'start' ? animal()[2] + " Let's focus!" : pick(SAY[e.type] || ['Hi!']));
-  if (['five', 'complete', 'faint', 'streak'].includes(e.type)) toast(e.text, e.type === 'faint');
-  if (st.settings.sound) beep(['warn', 'faint'].includes(e.type) ? [400, 300, 200] : ['complete', 'streak'].includes(e.type) ? [523, 659, 784] : []);
+  if (['five', 'complete', 'moodSad', 'moodPanic', 'moodFinal', 'moodFaint', 'streak', 'demo'].includes(e.type))
+    toast(e.text, ['moodPanic', 'moodFinal', 'moodFaint'].includes(e.type));
+  if (st.settings.sound) beep(['warn', 'moodPanic', 'moodFinal', 'moodFaint'].includes(e.type) ? [400, 300, 200] : ['complete', 'streak'].includes(e.type) ? [523, 659, 784] : []);
 }
 
 function moodOf() {
@@ -73,12 +77,13 @@ function buildHome() {
         <button type="button" data-a="incMins" aria-label="Add five minutes">+</button>
       </div>
       <div class="btns"><button class="primary" data-a="start">Start focusing</button></div>
-      <div class="prog">Today: <b id="prog"></b> of ${STREAK_MIN} min toward your daily streak${st.settings.demo ? '<br>Demo mode is ON (time runs 30x faster)' : ''}</div>`;
+      <div class="prog">Today: <b id="prog"></b> of ${STREAK_MIN} min toward your daily streak${st.settings.demo ? '<br>Demo mode is ON (time runs 30x faster)<div class="btns demo-tools"><button data-a="demoPrep">Prepare judge demo</button></div>' : ''}</div>`;
   }
   if (s.status === 'fainted') {
+    const rescueCost = st.settings.demo ? 'Free in demo' : `${RESCUE_COST} pts`;
     return `<div class="goal">${esc(s.goal)}</div><div class="fainted-msg">Your buddy fainted!</div>
-      <p class="muted" style="text-align:center">${s.rescued ? 'It was already rescued once this session.' : `Rescue it for ${RESCUE_COST} points and it comes back with ${RESCUE_HEALTH} health.`}</p>
-      <div class="btns"><button class="warn-btn" data-a="rescue" ${!s.rescued && st.points >= RESCUE_COST ? '' : 'disabled'}>Rescue (${RESCUE_COST} pts)</button><button data-a="end">End session</button></div>`;
+      <p class="muted" style="text-align:center">${s.rescued ? 'It was already rescued once this session.' : st.settings.demo ? `Demo rescue is free and restores ${RESCUE_HEALTH} health.` : `Rescue it for ${RESCUE_COST} points and it comes back with ${RESCUE_HEALTH} health.`}</p>
+      <div class="btns"><button class="warn-btn" data-a="rescue" ${!s.rescued && (st.settings.demo || st.points >= RESCUE_COST) ? '' : 'disabled'}>Rescue (${rescueCost})</button><button data-a="end">End session</button></div>`;
   }
   const over = s.host ? `<div class="mini">For this session, treat <b>${esc(s.host)}</b> as: ${['productive', 'neutral', 'distracting'].map(c => `<button data-a="override" data-cat="${c}">${c}</button>`).join('')}</div>` : '';
   return `<div class="goal">${esc(s.goal)}</div><div class="tm" id="tm"></div>
@@ -89,6 +94,7 @@ function buildHome() {
       <button data-a="treat" ${st.points >= TREAT_COST ? '' : 'disabled'}>Treat (${TREAT_COST} pts)</button>
       <button class="ghost" data-a="end">End session</button>
     </div>
+    ${st.settings.demo ? '<div class="btns demo-tools"><button data-a="demoMood">Demo: next mood</button></div>' : ''}
     ${s.status === 'paused' ? '<p class="muted">Paused. Paused time does not count toward points or your streak.</p>' : ''}`;
 }
 function updateDyn() {
@@ -112,7 +118,7 @@ function updateDyn() {
 }
 function renderHome() {
   const s = st.session;
-  const sig = [s ? s.status : 'idle', !!st.last, s && s.rescued, st.points >= TREAT_COST, st.points >= RESCUE_COST, s && s.host, st.settings.demo].join('|');
+  const sig = [s ? s.status : 'idle', !!st.last, s && s.rescued, st.points >= TREAT_COST, st.points >= RESCUE_COST, s && s.host, st.settings.demo, s && s.notifyStage].join('|');
   if (sig !== homeSig) { homeSig = sig; $('homeBody').innerHTML = buildHome(); }
   updateDyn();
 }
@@ -149,6 +155,7 @@ function renderSettings() {
     <div class="row"><input type="checkbox" id="sSound" ${s.sound ? 'checked' : ''}><label for="sSound" style="margin:0">Play sounds (off by default)</label></div>
     <div class="row"><input type="checkbox" id="sDemo" ${s.demo ? 'checked' : ''}><label for="sDemo" style="margin:0">Demo mode: time runs 30x faster, 1 minute sessions allowed</label></div>
     <div class="row suboption"><input type="checkbox" id="sDemoUnlocks" ${s.demoUnlocks ? 'checked' : ''}><label for="sDemoUnlocks" style="margin:0">Unlock all animals, accessories, and colors while demo mode is on</label></div></div>
+    ${s.demo ? '<div class="card demo-card"><b>Judge demo shortcut</b><p class="muted">Seeds 100 rescue points and sets today to 14 of 15 streak minutes. Your next focused minute secures the streak.</p><div class="btns"><button data-a="demoPrep">Prepare judge demo</button></div></div>' : ''}
     <label for="sProd">Productive sites (one per line)</label><textarea id="sProd">${esc(s.productive.join('\n'))}</textarea>
     <label for="sDist">Distracting sites (one per line)</label><textarea id="sDist">${esc(s.distracting.join('\n'))}</textarea>
     <p class="muted">Sites on neither list are neutral and do nothing. YouTube and Reddit start as neutral because they can contain study material. Only totals and settings are stored on your computer, never your browsing history.</p>

@@ -3,13 +3,13 @@ const fs = require('fs'), vm = require('vm'), assert = require('assert');
 const ctx = { chrome: { storage: { local: { get: async () => ({}), set: async () => {} } } }, console, URL };
 vm.createContext(ctx);
 const read = f => fs.readFileSync(__dirname + '/../' + f, 'utf8');
-vm.runInContext(read('shared.js') + ';this.api={advance,settle,health,classify,hostOf,DEFAULT_STATE,MIN,GRACE,ANIMAL_IDS,ITEMS,demoItemsUnlocked,streak:shiftDay};', ctx);
+vm.runInContext(read('shared.js') + ';this.api={advance,settle,health,classify,hostOf,DEFAULT_STATE,MIN,GRACE,ANIMAL_IDS,ITEMS,demoItemsUnlocked,moodAlertStage,updateMoodAlert,streak:shiftDay};', ctx);
 vm.runInContext(read('art.js') + ';this.art={ANIMALS,buddySVG,auraHTML};', ctx);
-const { advance, settle, health, classify, hostOf, DEFAULT_STATE, MIN, GRACE, ANIMAL_IDS, ITEMS, demoItemsUnlocked } = ctx.api, { ANIMALS, buddySVG, auraHTML } = ctx.art;
+const { advance, settle, health, classify, hostOf, DEFAULT_STATE, MIN, GRACE, ANIMAL_IDS, ITEMS, demoItemsUnlocked, moodAlertStage, updateMoodAlert } = ctx.api, { ANIMALS, buddySVG, auraHTML } = ctx.art;
 
 function session(mins, extra) {
   const st = DEFAULT_STATE();
-  st.session = Object.assign({ goal: 't', plannedMs: mins * MIN, activeMs: 0, prodMs: 0, distMs: 0, graceLeft: GRACE, status: 'running', cat: 'neutral', host: '', lastTick: 0, overrides: {}, rescued: false, fiveSent: false }, extra);
+  st.session = Object.assign({ goal: 't', plannedMs: mins * MIN, activeMs: 0, prodMs: 0, distMs: 0, graceLeft: GRACE, status: 'running', cat: 'neutral', host: '', lastTick: 0, overrides: {}, rescued: false, fiveSent: false, notifyStage: 0, notificationsMuted: false }, extra);
   return st;
 }
 function run(st, ms, step = 5000) { let t = st.session ? st.session.lastTick : 0; for (let i = 0; i < ms / step && st.session; i++) { t += step; advance(st, t); settle(st); } }
@@ -28,6 +28,20 @@ assert.equal(classify(hostOf('chrome://extensions'), st0), 'neutral');
 let a = session(25, { cat: 'distracting' });
 run(a, 5 * MIN + GRACE - 5000); assert.ok(health(a.session) > 0 && a.session.status === 'running');
 run(a, 10000); assert.equal(a.session.status, 'fainted'); assert.equal(health(a.session), 0);
+assert.equal(a.events.at(-1).type, 'moodFaint');
+assert.equal(a.events.at(-1).text, 'Your buddy fainted. Rescue it or end the session.');
+assert.equal(a.session.notificationsMuted, true);
+
+// notifications happen once when crossing each mood threshold, not on every tick
+let alerts = session(25);
+for (const [pct, type] of [[50, 'moodSad'], [25, 'moodPanic'], [10, 'moodFinal']]) {
+  alerts.session.distMs = alerts.session.plannedMs * .2 * (1 - pct / 100);
+  updateMoodAlert(alerts);
+  assert.equal(alerts.events.at(-1).type, type);
+  const count = alerts.events.length;
+  updateMoodAlert(alerts); assert.equal(alerts.events.length, count);
+}
+assert.deepEqual([51, 50, 25, 10, 0].map(moodAlertStage), [0, 1, 2, 3, 4]);
 
 // points formula examples from the spec
 const pts = (mins, healthPct) => { const st = session(mins, { prodMs: mins * MIN, activeMs: mins * MIN, distMs: (100 - healthPct) / 100 * mins * MIN * 0.2 }); settle(st); return st.points; };
@@ -44,6 +58,7 @@ assert.equal(d.streak.count, 1); assert.equal(d.day.secured, true);
 // every animal maps to approved bitmap art in every mood, and ids match the shop list
 assert.deepEqual(ANIMALS.map(x => x[0]), ANIMAL_IDS);
 for (const an of ANIMALS) for (const m of ['happy', 'okay', 'sad', 'panic', 'fainted', 'sleeping']) {
+  assert.ok(an[5] && Number.isFinite(an[5].t) && Number.isFinite(an[5].e), an[0] + ' accessory anchors');
   for (const opt of [{}, ...ITEMS.filter(i => i.type === 'acc').map(i => ({ acc: i.id })), ...ITEMS.filter(i => i.type === 'color').map(i => ({ hue: i.hue }))]) {
     const art = buddySVG(an[0], m, opt);
     assert.ok(art.startsWith('<span class="buddy-art') && art.endsWith('</span>'), an[0] + ' ' + m);

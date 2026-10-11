@@ -10,6 +10,13 @@ const RESCUE_COST = 20, RESCUE_HEALTH = 30;
 const TREAT_COST = 10, TREAT_HEAL = 20;
 const ANIMAL_COST = 200;
 const DEMO_SPEED = 30;        // demo mode makes session time run 30x faster
+const MOOD_ALERTS = [
+  null,
+  { type: 'moodSad', text: 'Your buddy is sad. Stay focused!' },
+  { type: 'moodPanic', text: 'Your buddy is stressed! Return to your work.' },
+  { type: 'moodFinal', text: 'Hurry! Your buddy is about to faint!' },
+  { type: 'moodFaint', text: 'Your buddy fainted. Rescue it or end the session.' }
+];
 
 const DEFAULT_PRODUCTIVE = ['docs.google.com', 'drive.google.com', 'classroom.google.com', 'instructure.com',
   'khanacademy.org', 'scholar.google.com', 'wikipedia.org', 'notion.so', 'desmos.com'];
@@ -78,6 +85,22 @@ function health(s) {
   return Math.max(0, Math.min(100, Math.round(100 - 100 * s.distMs / allowedMs(s))));
 }
 
+function moodAlertStage(h) {
+  return h <= 0 ? 4 : h <= 10 ? 3 : h <= 25 ? 2 : h <= 50 ? 1 : 0;
+}
+
+// Emits one alert only when health crosses into a worse mood band. If a clock
+// jump crosses several bands, only the most urgent new state is announced.
+function updateMoodAlert(st) {
+  const s = st.session;
+  if (!s || s.notificationsMuted) return;
+  const next = moodAlertStage(health(s)), previous = s.notifyStage || 0;
+  if (next <= previous) return;
+  s.notifyStage = next;
+  evt(st, MOOD_ALERTS[next].type, MOOD_ALERTS[next].text);
+  if (next === 4) s.notificationsMuted = true;
+}
+
 // Moves the clock forward. All timing is computed from timestamps, so it survives the
 // service worker sleeping. Paused/fainted time never counts.
 function advance(st, now) {
@@ -96,7 +119,8 @@ function advance(st, now) {
     s.graceLeft -= g;
     const room = Math.max(0, allowedMs(s) - s.distMs);
     s.distMs += Math.min(sim * (1 - g / real), room);
-    if (s.distMs >= allowedMs(s) - 1) { s.status = 'fainted'; evt(st, 'faint', 'Your buddy fainted! Rescue it or end the session.'); }
+    if (s.distMs >= allowedMs(s) - 1) s.status = 'fainted';
+    updateMoodAlert(st);
   } else {
     s.prodMs += sim;                                       // productive + neutral time earns points
     addDay(st, sim);

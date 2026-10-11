@@ -2,7 +2,7 @@
 
 A Chrome extension that turns studying into a game. Pick a session length and a cute floating animal buddy keeps you company on ordinary webpages, while Chrome's side panel holds the full dashboard. Wander onto a distracting site and your buddy gets nervous and loses health. Finish the timer to earn points, then spend them on accessories, colors, and new animals.
 
-**Demo flow:** start a session, open TikTok, watch the buddy panic, go back to your notes, finish the timer, earn points.
+**Judge demo:** enable Demo mode and demo unlocks, choose **Prepare judge demo**, start a short session, visit one productive and one distracting site, then use **Demo: next mood** to show sad → stressed → final warning → fainted. Rescue the buddy, show the nearly-complete streak, and briefly open the Shop to show pets and accessories.
 
 ## Install (developer mode)
 
@@ -16,7 +16,7 @@ Requires Chrome 116 or newer (side panel support). After editing code, click the
 
 ### Demo mode
 
-Real sessions are at least 15 minutes, which is slow for a live demo. In **Settings**, turn on **Demo mode**: session time runs 30x faster and 1-minute sessions are allowed. The 10-second warning grace period stays in real time.
+Real sessions are at least 15 minutes, which is slow for a live demo. In **Settings**, turn on **Demo mode**: session time runs 30x faster and 1-minute sessions are allowed. The 10-second warning grace period stays in real time. **Prepare judge demo** seeds 100 points and 14 of 15 streak minutes; demo rescue is free, and **Demo: next mood** advances health one threshold at a time.
 
 ## How it works
 
@@ -35,7 +35,7 @@ Real sessions are at least 15 minutes, which is slow for a live demo. In **Setti
 | Pausing | Allowed. Paused time never counts toward points or the streak |
 | Closing Chrome | Pauses the session. Reopening the panel keeps the timer |
 | Emergency exit | "End session" earns no points, and minutes already focused still count toward the streak |
-| Notifications | Only three: entered a distracting site, five minutes left, session finished or buddy fainted (plus one gentle nudge if you have been away for 3+ days). Sound is off by default |
+| Notifications | Only on mood thresholds: sad (50%), panicking (25%), final warning (10%), and fainted (0%). Fainting mutes notifications until rescue or a new session. Sound is off by default |
 | Privacy | Only totals and settings are stored (`chrome.storage.local`). Browsing history is never saved |
 
 ### Shop
@@ -77,7 +77,9 @@ How the pieces talk: the side panel sends small messages (`start`, `pause`, `tre
 
 * Chrome extensions can see which website you are on, but not other desktop apps, so app tracking is out of scope.
 * The floating buddy cannot run on Chrome's internal pages (`chrome://...`) or the Chrome Web Store; those count as neutral. The toolbar icon still opens the dashboard.
-* While the side panel is closed, time is checked every 30 seconds (Chrome's alarm limit), so the "session finished" message can arrive up to 30 seconds late. While it is open, it updates every second.
+* While the side panel is closed, time is checked every 30 seconds (Chrome's alarm limit). While it is open, it updates every second.
+* Demo mode includes a judge shortcut that seeds 100 points and 14/15 daily streak minutes, a deterministic “next mood” button, free rescue, and optional shop unlocks.
+* On Chrome 141+, the floating widget button closes an already-open side panel. Earlier supported Chrome versions keep the open action and use Chrome's own close control.
 
 ## Roadmap ideas
 

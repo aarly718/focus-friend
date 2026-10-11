@@ -3,6 +3,12 @@ importScripts('shared.js');
 
 let queue = Promise.resolve();                       // run actions one at a time so saves never race
 const enqueue = m => { queue = queue.then(() => act(m)).catch(e => console.error(e)); return queue; };
+let panelOpen = false;
+const canClosePanel = typeof chrome.sidePanel.close === 'function';
+
+function publishPanelState() {
+  chrome.storage.local.set({ ffPanel: { open: panelOpen, canClose: canClosePanel } });
+}
 
 async function currentTab() {
   try { const [t] = await chrome.tabs.query({ active: true, lastFocusedWindow: true }); return t || null; }
@@ -22,10 +28,11 @@ function cleanDomain(x) { return String(x).toLowerCase().trim().replace(/^https?
 
 function commit(st) {
   const fresh = (st.events || []).filter(e => e.id > st.notified);
-  for (const e of fresh) {                           // only 3 kinds of notification: distracted, 5 min left, finished/fainted
-    if (['warn', 'five', 'complete', 'faint'].includes(e.type))
-      chrome.notifications.create('', { type: 'basic', iconUrl: 'icons/icon128.png', title: 'Focus Friend', message: e.text });
-  }
+  // Desktop notifications are reserved for mood thresholds. If a delayed tick
+  // crosses more than one threshold, show only the newest/most urgent state.
+  const moodEvent = fresh.filter(e => ['moodSad', 'moodPanic', 'moodFinal', 'moodFaint'].includes(e.type)).pop();
+  if (moodEvent)
+    chrome.notifications.create('', { type: 'basic', iconUrl: 'icons/icon128.png', title: 'Focus Friend', message: moodEvent.text });
   if (fresh.length) st.notified = fresh[fresh.length - 1].id;
   return saveState(st);
 }
@@ -46,7 +53,8 @@ async function act(m) {
       if (!(mins >= min) || mins > 600) break;
       st.last = null; st.lastSessionDate = todayStr();
       st.session = { goal: String(m.goal || '').trim().slice(0, 80) || 'Focus session', plannedMs: mins * MIN, activeMs: 0, prodMs: 0,
-        distMs: 0, graceLeft: GRACE, status: 'running', cat: 'neutral', host: '', lastTick: now, overrides: {}, rescued: false, fiveSent: false };
+        distMs: 0, graceLeft: GRACE, status: 'running', cat: 'neutral', host: '', lastTick: now, overrides: {}, rescued: false, fiveSent: false,
+        notifyStage: 0, notificationsMuted: false };
       evt(st, 'start', 'Session started');
       applyTab(st, await currentTab());
       break;
@@ -59,13 +67,36 @@ async function act(m) {
       break;
     case 'treat':
       if (s && s.status !== 'fainted' && st.points >= TREAT_COST && health(s) < 100) {
-        st.points -= TREAT_COST; s.distMs = Math.max(0, s.distMs - TREAT_HEAL / 100 * allowedMs(s)); evt(st, 'treat', 'Yum! +20 health');
+        st.points -= TREAT_COST; s.distMs = Math.max(0, s.distMs - TREAT_HEAL / 100 * allowedMs(s));
+        // Recovering above a threshold allows a future downward crossing to alert again.
+        s.notifyStage = Math.min(s.notifyStage || 0, moodAlertStage(health(s)));
+        evt(st, 'treat', 'Yum! +20 health');
       }
       break;
     case 'rescue':
-      if (s && s.status === 'fainted' && !s.rescued && st.points >= RESCUE_COST) {
-        st.points -= RESCUE_COST; s.rescued = true; s.status = 'running'; s.lastTick = now; s.graceLeft = GRACE;
-        s.distMs = allowedMs(s) * (1 - RESCUE_HEALTH / 100); evt(st, 'rescue', 'Buddy rescued!');
+      if (s && s.status === 'fainted' && !s.rescued && (st.settings.demo || st.points >= RESCUE_COST)) {
+        if (!st.settings.demo) st.points -= RESCUE_COST;
+        s.rescued = true; s.status = 'running'; s.lastTick = now; s.graceLeft = GRACE;
+        s.distMs = allowedMs(s) * (1 - RESCUE_HEALTH / 100); s.notifyStage = moodAlertStage(RESCUE_HEALTH); s.notificationsMuted = false;
+        evt(st, 'rescue', 'Buddy rescued!');
+      }
+      break;
+    case 'demoMood':
+      if (s && s.status === 'running' && st.settings.demo) {
+        const next = Math.min(4, (s.notifyStage || moodAlertStage(health(s))) + 1);
+        const healthByStage = [100, 50, 25, 10, 0];
+        s.distMs = allowedMs(s) * (1 - healthByStage[next] / 100);
+        if (next === 4) s.status = 'fainted';
+        updateMoodAlert(st);
+      }
+      break;
+    case 'demoPrep':
+      if (st.settings.demo) {
+        const t = todayStr();
+        if (st.day.date !== t) st.day = { date: t, prodMs: 0, secured: false };
+        if (!st.day.secured) st.day.prodMs = Math.max(st.day.prodMs, 14 * MIN);
+        st.points = Math.max(st.points, 100);
+        evt(st, 'demo', 'Judge demo ready: 100 points and 14 streak minutes.');
       }
       break;
     case 'override':
@@ -105,10 +136,9 @@ async function act(m) {
     }
     case 'dismiss': st.last = null; break;
     case 'reset': await chrome.storage.local.clear(); return;
-    case 'alarm':   // the only inactivity notification: it has been days since the last session
+    case 'alarm':
       if (!st.session && st.lastSessionDate && st.inactiveNotified !== todayStr() && daysBetween(st.lastSessionDate, todayStr()) >= 3) {
         st.inactiveNotified = todayStr();
-        chrome.notifications.create('', { type: 'basic', iconUrl: 'icons/icon128.png', title: 'Focus Friend', message: 'Your buddy misses you! Ready for a study session?' });
       }
       break;
   }
@@ -123,7 +153,17 @@ chrome.runtime.onMessage.addListener((m, sender) => {
     chrome.sidePanel.open({ tabId: sender.tab.id }).catch(e => console.error(e));
     return;
   }
+  if (m && m.type === 'togglePanel' && sender.tab && sender.tab.id) {
+    if (panelOpen && canClosePanel) chrome.sidePanel.close({ windowId: sender.tab.windowId }).catch(e => console.error(e));
+    else chrome.sidePanel.open({ tabId: sender.tab.id }).catch(e => console.error(e));
+    return;
+  }
   enqueue(m);
+});
+chrome.runtime.onConnect.addListener(port => {
+  if (port.name !== 'focus-friend-panel') return;
+  panelOpen = true; publishPanelState();
+  port.onDisconnect.addListener(() => { panelOpen = false; publishPanelState(); });
 });
 chrome.tabs.onActivated.addListener(() => enqueue({ type: 'refresh' }));
 chrome.tabs.onUpdated.addListener((id, ch, tab) => { if (tab.active && (ch.url || ch.status === 'complete')) enqueue({ type: 'refresh' }); });
@@ -132,3 +172,4 @@ chrome.alarms.onAlarm.addListener(a => { if (a.name === 'tick') enqueue({ type: 
 chrome.runtime.onStartup.addListener(() => { chrome.alarms.create('tick', { periodInMinutes: 0.5 }); enqueue({ type: 'startup' }); });
 chrome.runtime.onInstalled.addListener(() => { chrome.alarms.create('tick', { periodInMinutes: 0.5 }); });
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+publishPanelState();

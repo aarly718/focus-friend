@@ -15,12 +15,12 @@
     #card.mini { width:66px; padding:6px; border-radius:20px; }
     #drag { cursor:grab; touch-action:none; }
     #drag:active { cursor:grabbing; }
-    #pet-stage { position:relative; width:104px; height:94px; margin:0 auto -3px; isolation:isolate; }
+    #pet-stage { position:relative; width:112px; height:104px; margin:0 auto 7px; isolation:isolate; overflow:visible; }
     #pet-circle { position:absolute; left:50%; top:50%; width:92px; height:92px; transform:translate(-50%,-50%); border-radius:50%; background:#EEE9FF; box-shadow:inset 0 0 0 1px #D8D0FF; transition:box-shadow .12s,transform .12s; }
     #card.pet-active #pet-circle { box-shadow:inset 0 0 0 2px #3B2F4A; transform:translate(-50%,-50%) scale(.98); }
-    #buddy { position:absolute; left:50%; bottom:-2px; z-index:2; width:88px; height:88px; transform:translateX(-50%); }
+    #buddy { position:absolute; left:50%; bottom:11px; z-index:2; width:82px; height:82px; transform:translateX(-50%); }
     .buddy-art { position:relative; display:block; width:100%; aspect-ratio:1; transform-origin:50% 80%; }
-    .buddy-crop { position:absolute; inset:0; overflow:hidden; border-radius:50%; background:#EEE9FF; box-shadow:inset 0 0 0 1px rgba(124,108,240,.2); transition:box-shadow .12s; }
+    .buddy-crop { position:absolute; inset:0; overflow:hidden; border-radius:50%; background:transparent; transition:box-shadow .12s; }
     #card.pet-active .buddy-crop { box-shadow:inset 0 0 0 2px #3B2F4A; }
     .buddy-sheet { position:absolute; display:block; max-width:none; height:auto; user-select:none; pointer-events:none; }
     .buddy-accessory { position:absolute; inset:0; z-index:3; display:block; width:100%; height:100%; pointer-events:none; }
@@ -32,8 +32,8 @@
     .mood-sleeping.buddy-art { animation:pet-sleep 3s ease-in-out infinite; }
     #card.mini #pet-stage { width:52px; height:52px; margin:0; }
     #card.mini #pet-circle { width:52px; height:52px; }
-    #card.mini #buddy { width:50px; height:50px; bottom:-1px; }
-    .buddy-aura { position:absolute; inset:0; z-index:1; pointer-events:none; overflow:visible; }
+    #card.mini #buddy { width:46px; height:46px; bottom:3px; }
+    .buddy-aura { position:absolute; inset:-8px; z-index:4; pointer-events:none; overflow:visible; }
     .aura-particle { position:absolute; left:var(--x); top:var(--y); font-weight:900; line-height:1; opacity:0; }
     .aura-happy .heart { color:#FF7FA1; font-size:11px; animation:aura-float 2.4s ease-in-out var(--delay) infinite; }
     .aura-happy .sparkle { color:#F4C84A; font-size:12px; animation:aura-twinkle 1.8s ease-in-out var(--delay) infinite; }
@@ -97,7 +97,8 @@
   const status = root.getElementById('status');
   const healthBar = root.querySelector('#health i');
   const toggle = root.getElementById('toggle');
-  let st = null, minimized = false, buddyKey = '';
+  const openButton = root.getElementById('open');
+  let st = null, minimized = false, buddyKey = '', panelState = { open: false, canClose: false };
   let dragging = false, dragMoved = false, startX = 0, startY = 0, startLeft = 18, startTop = 0;
 
   const pad = n => String(n).padStart(2, '0');
@@ -120,6 +121,8 @@
     toggle.textContent = minimized ? '+' : '−';
     toggle.title = minimized ? 'Expand Focus Friend' : 'Minimize Focus Friend';
     toggle.setAttribute('aria-label', toggle.title);
+    openButton.textContent = panelState.open && panelState.canClose ? 'Close Focus Friend' : 'Open Focus Friend';
+    openButton.title = panelState.open && !panelState.canClose ? 'Use Chrome\'s side-panel control to close' : '';
     const mood = moodOf(), key = [st.animal, mood, st.equipped, st.color].join('|');
     if (key !== buddyKey) {
       buddyKey = key;
@@ -141,7 +144,7 @@
   toggle.addEventListener('click', e => {
     e.stopPropagation(); minimized = !minimized; chrome.storage.local.set({ ffWidget: { minimized } }); render();
   });
-  root.getElementById('open').addEventListener('click', () => chrome.runtime.sendMessage({ type: 'openPanel' }));
+  openButton.addEventListener('click', () => chrome.runtime.sendMessage({ type: 'togglePanel' }));
 
   root.getElementById('drag').addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
@@ -167,9 +170,10 @@
     if (area !== 'local') return;
     if (changes.ff) loadState().then(next => { st = next; render(); });
     if (changes.ffWidget) { minimized = !!(changes.ffWidget.newValue && changes.ffWidget.newValue.minimized); render(); }
+    if (changes.ffPanel) { panelState = changes.ffPanel.newValue || panelState; render(); }
   });
   setInterval(() => { if (document.visibilityState === 'visible' && st && st.session) chrome.runtime.sendMessage({ type: 'tick' }); }, 1000);
-  Promise.all([loadState(), chrome.storage.local.get('ffWidget')]).then(([next, saved]) => {
-    st = next; minimized = !!(saved.ffWidget && saved.ffWidget.minimized); render();
+  Promise.all([loadState(), chrome.storage.local.get(['ffWidget', 'ffPanel'])]).then(([next, saved]) => {
+    st = next; minimized = !!(saved.ffWidget && saved.ffWidget.minimized); panelState = saved.ffPanel || panelState; render();
   });
 })();

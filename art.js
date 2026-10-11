@@ -175,10 +175,10 @@ const LEGACY_ANIMALS = [
 ];
 
 function accessory(id, g) {
-  const t = g.t, e = g.e, d = g.d;
-  if (id === 'bow') return '<g transform="rotate(-10 60 ' + t + ')">' + Pa('M60 ' + (t + 1) + ' L44 ' + (t - 8) + ' L44 ' + (t + 10) + 'Z', '#FF6F91') + Pa('M60 ' + (t + 1) + ' L76 ' + (t - 8) + ' L76 ' + (t + 10) + 'Z', '#FF6F91') + Ci(60, t + 1, 4.5, '#E0446E') + '</g>';
-  if (id === 'glasses') { const f = 'rgba(255,255,255,.35)', s = 'stroke="#2b2b2b" stroke-width="2"'; return Ci(60 - d, e, 7.5, f, s) + Ci(60 + d, e, 7.5, f, s) + St('M' + (60 - d + 7.5) + ' ' + e + ' L' + (60 + d - 7.5) + ' ' + e, '#2b2b2b', 2); }
-  if (id === 'hat') return '<g transform="rotate(-8 60 ' + t + ')"><rect x="49" y="' + (t - 17) + '" width="22" height="21" rx="3" fill="#2f2f3a"/><rect x="49" y="' + (t - 2) + '" width="22" height="5" fill="#E24B4A"/>' + E(60, t + 4, 17, 4.5, '#2f2f3a') + '</g>';
+  const x = g.x || 60, t = g.t, e = g.e, d = g.d, scale = g.s || 1;
+  if (id === 'bow') return '<g transform="rotate(' + (g.br == null ? -10 : g.br) + ' ' + x + ' ' + t + ') translate(' + x + ' ' + t + ') scale(' + scale + ') translate(' + (-x) + ' ' + (-t) + ')">' + Pa('M' + x + ' ' + (t + 1) + ' L' + (x - 16) + ' ' + (t - 8) + ' L' + (x - 16) + ' ' + (t + 10) + 'Z', '#FF6F91') + Pa('M' + x + ' ' + (t + 1) + ' L' + (x + 16) + ' ' + (t - 8) + ' L' + (x + 16) + ' ' + (t + 10) + 'Z', '#FF6F91') + Ci(x, t + 1, 4.5, '#E0446E') + '</g>';
+  if (id === 'glasses') { const f = 'rgba(255,255,255,.35)', s = 'stroke="#2b2b2b" stroke-width="2"', r = 7.5 * scale; return Ci(x - d, e, r, f, s) + Ci(x + d, e, r, f, s) + St('M' + (x - d + r) + ' ' + e + ' L' + (x + d - r) + ' ' + e, '#2b2b2b', 2); }
+  if (id === 'hat') return '<g transform="rotate(' + (g.hr == null ? -8 : g.hr) + ' ' + x + ' ' + t + ') translate(' + x + ' ' + t + ') scale(' + scale + ') translate(' + (-x) + ' ' + (-t) + ')"><rect x="' + (x - 11) + '" y="' + (t - 17) + '" width="22" height="21" rx="3" fill="#2f2f3a"/><rect x="' + (x - 11) + '" y="' + (t - 2) + '" width="22" height="5" fill="#E24B4A"/>' + E(x, t + 4, 17, 4.5, '#2f2f3a') + '</g>';
   return '';
 }
 
@@ -212,36 +212,36 @@ const PET_SHEETS = {
 
 // [id, display name, sound, sheet, row, accessory anchors]
 const ANIMALS = [
-  ['retriever', 'Golden retriever', 'Woof!', 'dogs', 0],
-  ['shepherd', 'German shepherd', 'Bark!', 'dogs', 1],
-  ['corgi', 'Corgi', 'Yip!', 'dogs', 2],
-  ['husky', 'Husky', 'Awoo!', 'dogs', 3],
-  ['dalmatian', 'Dalmatian', 'Woof!', 'dogs', 4],
-  ['pug', 'Pug', 'Snort!', 'small', 0],
-  ['tabby', 'Orange tabby', 'Meow!', 'small', 1],
-  ['blackcat', 'Black cat', 'Mrrp!', 'small', 2],
-  ['bunny', 'Bunny', 'Squeak!', 'small', 3, { t: 34 }],
-  ['fox', 'Fox', 'Yip yip!', 'small', 4],
-  ['wolf', 'Wolf', 'Howl!', 'forest', 0],
-  ['panda', 'Panda', 'Munch!', 'forest', 1],
-  ['polarbear', 'Polar bear', 'Roar!', 'forest', 2],
-  ['brownbear', 'Brown bear', 'Grr!', 'forest', 3],
-  ['koala', 'Koala', 'Zzz!', 'forest', 4],
-  ['raccoon', 'Raccoon', 'Chitter!', 'woodland', 0],
-  ['redpanda', 'Red panda', 'Chirp!', 'woodland', 1],
-  ['otter', 'Sea otter', 'Eek!', 'woodland', 2],
-  ['capybara', 'Capybara', 'Chill!', 'woodland', 3, { e: 61 }],
-  ['pig', 'Pig', 'Oink!', 'woodland', 4],
-  ['cow', 'Cow', 'Moo!', 'farm', 0],
-  ['sheep', 'Sheep', 'Baa!', 'farm', 1, { t: 31 }],
-  ['lion', 'Lion', 'Roar!', 'farm', 2, { t: 29 }],
-  ['tiger', 'Tiger', 'Rawr!', 'farm', 3],
-  ['monkey', 'Monkey', 'Ooh ooh!', 'farm', 4],
-  ['penguin', 'Penguin', 'Honk!', 'birds', 0],
-  ['owl', 'Owl', 'Hoo!', 'birds', 1],
-  ['chicken', 'Chicken', 'Bawk!', 'birds', 2, { t: 31 }],
-  ['duck', 'Duck', 'Quack!', 'birds', 3],
-  ['frog', 'Frog', 'Ribbit!', 'birds', 4, { t: 31, e: 47, d: 16 }]
+  ['retriever', 'Golden retriever', 'Woof!', 'dogs', 0, { x: 60, t: 35, e: 58, d: 11, s: 1.00, br: -10, hr: -8 }],
+  ['shepherd', 'German shepherd', 'Bark!', 'dogs', 1, { x: 60, t: 31, e: 58, d: 12, s: .94, br: -7, hr: -5 }],
+  ['corgi', 'Corgi', 'Yip!', 'dogs', 2, { x: 60, t: 33, e: 59, d: 12, s: .92, br: -9, hr: -6 }],
+  ['husky', 'Husky', 'Awoo!', 'dogs', 3, { x: 60, t: 31, e: 57, d: 12, s: .94, br: -6, hr: -4 }],
+  ['dalmatian', 'Dalmatian', 'Woof!', 'dogs', 4, { x: 60, t: 36, e: 59, d: 11, s: .98, br: -11, hr: -8 }],
+  ['pug', 'Pug', 'Snort!', 'small', 0, { x: 60, t: 39, e: 60, d: 12, s: .90, br: -8, hr: -7 }],
+  ['tabby', 'Orange tabby', 'Meow!', 'small', 1, { x: 60, t: 33, e: 58, d: 11, s: .92, br: -6, hr: -4 }],
+  ['blackcat', 'Black cat', 'Mrrp!', 'small', 2, { x: 60, t: 33, e: 58, d: 11, s: .92, br: -6, hr: -4 }],
+  ['bunny', 'Bunny', 'Squeak!', 'small', 3, { x: 60, t: 25, e: 60, d: 11, s: .82, br: -4, hr: -2 }],
+  ['fox', 'Fox', 'Yip yip!', 'small', 4, { x: 60, t: 31, e: 57, d: 12, s: .92, br: -7, hr: -5 }],
+  ['wolf', 'Wolf', 'Howl!', 'forest', 0, { x: 60, t: 31, e: 57, d: 12, s: .94, br: -7, hr: -5 }],
+  ['panda', 'Panda', 'Munch!', 'forest', 1, { x: 60, t: 37, e: 59, d: 12, s: .96, br: -10, hr: -8 }],
+  ['polarbear', 'Polar bear', 'Roar!', 'forest', 2, { x: 60, t: 37, e: 59, d: 11, s: .98, br: -10, hr: -8 }],
+  ['brownbear', 'Brown bear', 'Grr!', 'forest', 3, { x: 60, t: 37, e: 59, d: 11, s: .98, br: -10, hr: -8 }],
+  ['koala', 'Koala', 'Zzz!', 'forest', 4, { x: 60, t: 38, e: 60, d: 12, s: .86, br: -8, hr: -6 }],
+  ['raccoon', 'Raccoon', 'Chitter!', 'woodland', 0, { x: 60, t: 36, e: 59, d: 12, s: .92, br: -9, hr: -7 }],
+  ['redpanda', 'Red panda', 'Chirp!', 'woodland', 1, { x: 60, t: 34, e: 58, d: 12, s: .92, br: -8, hr: -6 }],
+  ['otter', 'Sea otter', 'Eek!', 'woodland', 2, { x: 60, t: 38, e: 60, d: 11, s: .94, br: -10, hr: -8 }],
+  ['capybara', 'Capybara', 'Chill!', 'woodland', 3, { x: 60, t: 39, e: 61, d: 11, s: .94, br: -10, hr: -8 }],
+  ['pig', 'Pig', 'Oink!', 'woodland', 4, { x: 60, t: 39, e: 61, d: 11, s: .92, br: -9, hr: -7 }],
+  ['cow', 'Cow', 'Moo!', 'farm', 0, { x: 60, t: 28, e: 59, d: 12, s: .84, br: -4, hr: -2 }],
+  ['sheep', 'Sheep', 'Baa!', 'farm', 1, { x: 60, t: 29, e: 59, d: 11, s: .86, br: -5, hr: -3 }],
+  ['lion', 'Lion', 'Roar!', 'farm', 2, { x: 60, t: 27, e: 59, d: 11, s: .88, br: -7, hr: -5 }],
+  ['tiger', 'Tiger', 'Rawr!', 'farm', 3, { x: 60, t: 34, e: 58, d: 11, s: .92, br: -7, hr: -5 }],
+  ['monkey', 'Monkey', 'Ooh ooh!', 'farm', 4, { x: 60, t: 39, e: 60, d: 12, s: .88, br: -9, hr: -7 }],
+  ['penguin', 'Penguin', 'Honk!', 'birds', 0, { x: 60, t: 35, e: 57, d: 10, s: .92, br: -8, hr: -6 }],
+  ['owl', 'Owl', 'Hoo!', 'birds', 1, { x: 60, t: 30, e: 59, d: 13, s: .86, br: -5, hr: -3 }],
+  ['chicken', 'Chicken', 'Bawk!', 'birds', 2, { x: 60, t: 27, e: 54, d: 10, s: .82, br: -4, hr: -2 }],
+  ['duck', 'Duck', 'Quack!', 'birds', 3, { x: 60, t: 34, e: 57, d: 11, s: .90, br: -8, hr: -6 }],
+  ['frog', 'Frog', 'Ribbit!', 'birds', 4, { x: 60, t: 28, e: 47, d: 16, s: .82, br: -4, hr: -2 }]
 ];
 
 const MOOD_COLUMN = { happy: 0, okay: 1, sleeping: 1, sad: 2, panic: 3, fainted: 4 };
@@ -259,7 +259,7 @@ function buddySVG(id, mood, opt) {
   const width = 1254 / crop * 100, left = -x / crop * 100, top = -y / crop * 100;
   const hue = opt.hue ? 'filter:hue-rotate(' + opt.hue + 'deg) saturate(1.15);' : '';
   const anchors = Object.assign({ t: 36, e: 59, d: 11 }, animal[5] || {});
-  const acc = opt.acc ? '<svg class="buddy-accessory" viewBox="0 0 120 150" aria-hidden="true">' + accessory(opt.acc, anchors) + '</svg>' : '';
+  const acc = opt.acc ? '<svg class="buddy-accessory" viewBox="0 0 120 120" aria-hidden="true">' + accessory(opt.acc, anchors) + '</svg>' : '';
   const sleep = mood === 'sleeping' ? '<span class="buddy-sleep" aria-hidden="true">z<sup>z</sup></span>' : '';
   return '<span class="buddy-art mood-' + mood + '" role="img" aria-label="' + animal[1] + ', ' + mood + '"><span class="buddy-crop"><img class="buddy-sheet" src="' + assetURL(sheet.file) + '" alt="" draggable="false" style="width:' + width.toFixed(4) + '%;left:' + left.toFixed(4) + '%;top:' + top.toFixed(4) + '%;' + hue + '"></span>' + acc + sleep + '</span>';
 }
