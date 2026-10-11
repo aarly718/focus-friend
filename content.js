@@ -101,6 +101,36 @@
   const openButton = root.getElementById('open');
   let st = null, minimized = false, buddyKey = '', panelState = { open: false, canClose: false };
   let dragging = false, dragMoved = false, startX = 0, startY = 0, startLeft = 18, startTop = 0;
+  let tickTimer = 0, stopped = false;
+
+  function contextIsValid() {
+    try { return !!(chrome.runtime && chrome.runtime.id); }
+    catch (e) { return false; }
+  }
+  function stopStaleWidget() {
+    if (stopped) return;
+    stopped = true;
+    if (tickTimer) clearInterval(tickTimer);
+    host.remove();
+  }
+  function handleExtensionError(error) {
+    const message = String(error && error.message || error || '');
+    if (!contextIsValid() || message.includes('Extension context invalidated')) return stopStaleWidget();
+    console.warn('Focus Friend:', error);
+  }
+  function withExtensionContext(task) {
+    if (!contextIsValid()) { stopStaleWidget(); return false; }
+    try {
+      const result = task();
+      if (result && typeof result.catch === 'function') result.catch(handleExtensionError);
+      return true;
+    } catch (error) { handleExtensionError(error); return false; }
+  }
+  const sendMessage = message => withExtensionContext(() => chrome.runtime.sendMessage(message));
+  const reloadState = () => withExtensionContext(() => loadState().then(next => {
+    if (stopped) return;
+    st = next; render();
+  }));
 
   const pad = n => String(n).padStart(2, '0');
   const fmt = ms => {
@@ -143,9 +173,11 @@
   }
 
   toggle.addEventListener('click', e => {
-    e.stopPropagation(); minimized = !minimized; chrome.storage.local.set({ ffWidget: { minimized } }); render();
+    e.stopPropagation(); minimized = !minimized;
+    if (!withExtensionContext(() => chrome.storage.local.set({ ffWidget: { minimized } }))) return;
+    render();
   });
-  openButton.addEventListener('click', () => chrome.runtime.sendMessage({ type: 'togglePanel' }));
+  openButton.addEventListener('click', () => sendMessage({ type: 'togglePanel' }));
 
   root.getElementById('drag').addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
@@ -163,18 +195,22 @@
   });
   root.getElementById('drag').addEventListener('pointerup', e => {
     dragging = false; card.classList.remove('pet-active'); e.currentTarget.releasePointerCapture(e.pointerId);
-    if (!dragMoved) chrome.runtime.sendMessage({ type: 'openPanel' });
+    if (!dragMoved) sendMessage({ type: 'openPanel' });
   });
   root.getElementById('drag').addEventListener('pointercancel', () => { dragging = false; card.classList.remove('pet-active'); });
 
   chrome.storage.onChanged.addListener((changes, area) => {
+    if (!contextIsValid()) return stopStaleWidget();
     if (area !== 'local') return;
-    if (changes.ff) loadState().then(next => { st = next; render(); });
+    if (changes.ff) reloadState();
     if (changes.ffWidget) { minimized = !!(changes.ffWidget.newValue && changes.ffWidget.newValue.minimized); render(); }
     if (changes.ffPanel) { panelState = changes.ffPanel.newValue || panelState; render(); }
   });
-  setInterval(() => { if (document.visibilityState === 'visible' && st && st.session) chrome.runtime.sendMessage({ type: 'tick' }); }, 1000);
-  Promise.all([loadState(), chrome.storage.local.get(['ffWidget', 'ffPanel'])]).then(([next, saved]) => {
+  tickTimer = setInterval(() => {
+    if (document.visibilityState === 'visible' && st && st.session) sendMessage({ type: 'tick' });
+  }, 1000);
+  withExtensionContext(() => Promise.all([loadState(), chrome.storage.local.get(['ffWidget', 'ffPanel'])]).then(([next, saved]) => {
+    if (stopped) return;
     st = next; minimized = !!(saved.ffWidget && saved.ffWidget.minimized); panelState = saved.ffPanel || panelState; render();
-  });
+  }));
 })();

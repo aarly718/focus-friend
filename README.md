@@ -12,7 +12,7 @@ A Chrome extension that turns studying into a game. Pick a session length and a 
 4. Refresh any webpages that were already open so Chrome can add the floating buddy.
 5. Click the Focus Friend icon in the toolbar. The side panel opens; the buddy also appears in the lower-left corner of ordinary webpages.
 
-Requires Chrome 116 or newer (side panel support). After editing code, click the refresh icon on the extension's card.
+Requires Chrome 116 or newer (side panel support). After editing code, click the refresh icon on the extension's card, then refresh any already-open webpages so Chrome replaces their old content scripts. Stale widgets now shut themselves down safely if an extension reload invalidates their context.
 
 ### Demo mode
 
