@@ -47,7 +47,7 @@ const daysBetween = (a, b) => dayNum(b) - dayNum(a);
 const DEFAULT_STATE = () => ({
   points: 0, best: 0, totalMin: 0,
   animal: 'retriever', animals: ['retriever'], items: [], equipped: null, color: null,
-  settings: { sound: false, demo: false, demoUnlocks: false, productive: DEFAULT_PRODUCTIVE.slice(), distracting: DEFAULT_DISTRACTING.slice() },
+  settings: { muted: true, volume: 60, demo: false, demoUnlocks: false, productive: DEFAULT_PRODUCTIVE.slice(), distracting: DEFAULT_DISTRACTING.slice() },
   streak: { count: 0, last: null },
   day: { date: null, prodMs: 0, secured: false },
   session: null, last: null, lastSessionDate: null, inactiveNotified: null,
@@ -55,7 +55,11 @@ const DEFAULT_STATE = () => ({
 });
 async function loadState() {
   const r = await chrome.storage.local.get('ff'), d = DEFAULT_STATE(), s = r.ff || {};
-  return { ...d, ...s, settings: { ...d.settings, ...(s.settings || {}) } };
+  const merged = { ...d, ...s, settings: { ...d.settings, ...(s.settings || {}) } };
+  // Older saves used one sound checkbox. Preserve the user's choice when upgrading.
+  if (s.settings && s.settings.sound === true && s.settings.muted === undefined) merged.settings.muted = false;
+  delete merged.settings.sound;
+  return merged;
 }
 const saveState = st => chrome.storage.local.set({ ff: st });
 const demoItemsUnlocked = st => !!(st.settings.demo && st.settings.demoUnlocks);
@@ -155,4 +159,41 @@ function settle(st) {
   st.last = { ok: true, goal: s.goal, base, bonus, health: h, total: base + bonus, rescued: s.rescued };
   st.session = null;
   evt(st, 'complete', 'Session complete! +' + (base + bonus) + ' points');
+}
+
+/* ---------- sounds ---------- */
+const SOUND_IDS = ['happy', 'okay', 'sad', 'panic', 'final', 'faint', 'sleeping', 'warn', 'five', 'complete', 'streak', 'rescue', 'treat', 'start'];
+// The same sound has a slightly different voice for each animal.
+const ANIMAL_PITCH = { retriever: 1, shepherd: .85, corgi: 1.05, husky: .95, dalmatian: 1, pug: 1.1, tabby: 1.25, blackcat: 1.2, bunny: 1.35,
+  fox: 1.15, wolf: .75, panda: .8, polarbear: .65, brownbear: .7, koala: .9, raccoon: 1.1, redpanda: 1.25, otter: 1.2, capybara: .8, pig: .95,
+  cow: .6, sheep: .95, lion: .6, tiger: .7, monkey: 1.2, penguin: 1, owl: .85, chicken: 1.3, duck: 1.15, frog: 1.1 };
+const EVENT_SOUND = { warn: 'warn', five: 'five', complete: 'complete', streak: 'streak', treat: 'treat', rescue: 'rescue', start: 'start',
+  moodSad: 'sad', moodPanic: 'panic', moodFinal: 'final', moodFaint: 'faint' };
+const MOOD_SOUND = { happy: 'happy', okay: 'okay', sad: 'sad', panic: 'panic', fainted: 'faint', sleeping: 'sleeping' };
+const SOUND_PRIORITY = ['faint', 'final', 'complete', 'streak', 'rescue', 'panic', 'warn', 'sad', 'five', 'start', 'treat', 'okay', 'happy', 'sleeping'];
+
+function moodKey(st) {
+  const s = st.session;
+  if (!s) return 'happy';
+  if (s.status === 'fainted') return 'fainted';
+  if (s.status === 'paused') return 'sleeping';
+  const h = health(s);
+  return h >= 76 ? 'happy' : h >= 51 ? 'okay' : h >= 26 ? 'sad' : 'panic';
+}
+
+// Play only the most important simultaneous event. Completion may be followed by a streak reward.
+// Entering/leaving pause is intentionally silent so routine controls do not become distracting.
+function planSounds(st, freshEvents, prevMood) {
+  const found = new Set();
+  const alertsMuted = !!(st.session && st.session.notificationsMuted);
+  for (const e of freshEvents) {
+    if (alertsMuted && ['warn', 'moodSad', 'moodPanic', 'moodFinal'].includes(e.type)) continue;
+    if (EVENT_SOUND[e.type]) found.add(EVENT_SOUND[e.type]);
+  }
+  const mood = moodKey(st);
+  if (st.session && prevMood && mood !== prevMood && mood !== 'sleeping' && prevMood !== 'sleeping') found.add(MOOD_SOUND[mood]);
+  const ordered = SOUND_PRIORITY.filter(id => found.has(id));
+  const plan = ordered.slice(0, 1);
+  if (ordered[0] === 'complete' && found.has('streak')) plan.push('streak');
+  return plan;
 }

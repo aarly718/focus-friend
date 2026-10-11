@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "A cute study buddy that cheers you on and gets distracted when you do.",
   "minimum_chrome_version": "116",
-  "permissions": ["storage", "tabs", "alarms", "notifications", "sidePanel"],
+  "permissions": ["storage", "tabs", "alarms", "notifications", "sidePanel", "offscreen"],
   "background": { "service_worker": "background.js" },
   "content_scripts": [
     {

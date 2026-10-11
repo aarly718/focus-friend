@@ -1,5 +1,5 @@
 // Side panel UI. It never changes game state itself: it sends actions to background.js and renders what comes back.
-let st = null, tab = 'home', lastEvt = -1, sayTimer, toastTimer, buddyKey = '', homeSig = '', shopSig = '', ctx;
+let st = null, tab = 'home', lastEvt = -1, sayTimer, toastTimer, buddyKey = '', homeSig = '', shopSig = '';
 const panelPort = chrome.runtime.connect({ name: 'focus-friend-panel' });
 let selectedMins = 25, customOpen = false;
 const $ = id => document.getElementById(id);
@@ -29,18 +29,10 @@ function toast(text, bad) {
   const el = $('toast'); el.textContent = text; el.className = bad ? 'bad' : ''; el.hidden = false;
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.hidden = true, 4500);
 }
-function beep(freqs) {   // optional sound (off by default)
-  try {
-    ctx = ctx || new AudioContext(); ctx.resume();
-    freqs.forEach((f, i) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'square'; o.frequency.value = f; g.gain.value = 0.05;
-      o.connect(g); g.connect(ctx.destination); o.start(ctx.currentTime + i * .15); o.stop(ctx.currentTime + (i + 1) * .15); });
-  } catch (e) {}
-}
 function onEvent(e) {
   say(e.type === 'start' ? animal()[2] + " Let's focus!" : pick(SAY[e.type] || ['Hi!']));
   if (['five', 'complete', 'moodSad', 'moodPanic', 'moodFinal', 'moodFaint', 'streak', 'demo'].includes(e.type))
     toast(e.text, ['moodPanic', 'moodFinal', 'moodFaint'].includes(e.type));
-  if (st.settings.sound) beep(['warn', 'moodPanic', 'moodFinal', 'moodFaint'].includes(e.type) ? [400, 300, 200] : ['complete', 'streak'].includes(e.type) ? [523, 659, 784] : []);
 }
 
 function moodOf() {
@@ -152,10 +144,10 @@ function renderShop() {
 function renderSettings() {
   const s = st.settings;
   $('settings').innerHTML = `<div class="card">
-    <div class="row"><input type="checkbox" id="sSound" ${s.sound ? 'checked' : ''}><label for="sSound" style="margin:0">Play sounds (off by default)</label></div>
     <div class="row"><input type="checkbox" id="sDemo" ${s.demo ? 'checked' : ''}><label for="sDemo" style="margin:0">Demo mode: time runs 30x faster, 1 minute sessions allowed</label></div>
     <div class="row suboption"><input type="checkbox" id="sDemoUnlocks" ${s.demoUnlocks ? 'checked' : ''}><label for="sDemoUnlocks" style="margin:0">Unlock all animals, accessories, and colors while demo mode is on</label></div></div>
     ${s.demo ? '<div class="card demo-card"><b>Judge demo shortcut</b><p class="muted">Seeds 100 rescue points and sets today to 14 of 15 streak minutes. Your next focused minute secures the streak.</p><div class="btns"><button data-a="demoPrep">Prepare judge demo</button></div></div>' : ''}
+    ${soundBoardHTML()}
     <label for="sProd">Productive sites (one per line)</label><textarea id="sProd">${esc(s.productive.join('\n'))}</textarea>
     <label for="sDist">Distracting sites (one per line)</label><textarea id="sDist">${esc(s.distracting.join('\n'))}</textarea>
     <p class="muted">Sites on neither list are neutral and do nothing. YouTube and Reddit start as neutral because they can contain study material. Only totals and settings are stored on your computer, never your browsing history.</p>
@@ -167,6 +159,7 @@ function renderSettings() {
 function render() {
   if (!st) return;
   $('pts').textContent = '⭐ ' + st.points; $('str').textContent = '🔥 ' + streakNow();
+  syncAudio();
   for (const id of ['home', 'shop', 'settings']) $(id).hidden = id !== tab;
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.s === tab));
   renderBuddy();
@@ -198,13 +191,37 @@ document.addEventListener('click', e => {
     selectedMins = Math.round(mins);
     return send({ type: 'start', goal: 'Focus session', mins: selectedMins });
   }
+  if (a === 'toggleMute') return send({ type: 'audio', muted: !st.settings.muted, preview: true });
   if (a === 'saveSettings') {
     const lines = id => $(id).value.split('\n');
-    send({ type: 'settings', settings: { sound: $('sSound').checked, demo: $('sDemo').checked, demoUnlocks: $('sDemoUnlocks').checked, productive: lines('sProd'), distracting: lines('sDist') } });
+    send({ type: 'settings', settings: { demo: $('sDemo').checked, demoUnlocks: $('sDemoUnlocks').checked, productive: lines('sProd'), distracting: lines('sDist') } });
     return toast('Settings saved');
   }
   if (a === 'reset') { if (confirm('Reset your points, animals, and streak? This cannot be undone.')) send({ type: 'reset' }); return; }
   send({ type: a, id: b.dataset.id, host: st.session && st.session.host, cat: b.dataset.cat });
+});
+
+/* ---------------- sound controls ---------------- */
+const SOUND_BOARD = [['happy', 'Happy'], ['okay', 'Okay'], ['sad', 'Sad'], ['panic', 'Panicking'], ['final', 'Final warning'], ['faint', 'Fainted'], ['sleeping', 'Sleeping'],
+  ['warn', 'Distracted'], ['five', '5 min left'], ['complete', 'Complete'], ['streak', 'Streak'], ['rescue', 'Rescued'], ['treat', 'Treat'], ['start', 'Start']];
+function soundBoardHTML() {
+  return `<div class="card"><b>Sounds</b><p class="muted">Sounds are off by default. Use the speaker and volume bar above, then preview any meaningful event below. Routine clicks, pause, and resume stay quiet.</p>
+    <div class="soundboard">${SOUND_BOARD.map(([id, label]) => `<button data-a="testSound" data-id="${id}" ${st.settings.muted ? 'disabled' : ''}>${label}</button>`).join('')}</div></div>`;
+}
+function syncAudio() {
+  const { muted, volume } = st.settings, silent = muted || volume === 0;
+  const btn = $('muteBtn');
+  btn.textContent = silent ? '🔇' : volume < 40 ? '🔈' : volume < 75 ? '🔉' : '🔊';
+  btn.setAttribute('aria-pressed', String(silent));
+  btn.title = muted ? 'Unmute sounds' : 'Mute sounds';
+  btn.setAttribute('aria-label', btn.title);
+  if (document.activeElement !== $('hVol')) $('hVol').value = volume;
+  $('hVolNum').textContent = muted ? 'Muted' : volume + '%';
+  document.querySelectorAll('.soundboard button').forEach(button => { button.disabled = !!muted; });
+}
+document.addEventListener('input', e => { if (e.target.id === 'hVol') $('hVolNum').textContent = e.target.value + '%'; });
+document.addEventListener('change', e => {
+  if (e.target.id === 'hVol') send({ type: 'audio', volume: Number(e.target.value), autoUnmute: true, preview: true });
 });
 
 function apply(next) {

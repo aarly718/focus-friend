@@ -6,6 +6,28 @@ const enqueue = m => { queue = queue.then(() => act(m)).catch(e => console.error
 let panelOpen = false;
 const canClosePanel = typeof chrome.sidePanel.close === 'function';
 
+/* ---------- offscreen sound playback ---------- */
+let offscreenCreating = null;
+async function ensureOffscreen() {
+  const url = chrome.runtime.getURL('offscreen.html');
+  const open = await chrome.runtime.getContexts({ contextTypes: ['OFFSCREEN_DOCUMENT'], documentUrls: [url] });
+  if (open.length) return;
+  if (!offscreenCreating) {
+    offscreenCreating = chrome.offscreen.createDocument({
+      url: 'offscreen.html', reasons: ['AUDIO_PLAYBACK'], justification: 'Play Focus Friend sound effects'
+    }).finally(() => { offscreenCreating = null; });
+  }
+  await offscreenCreating;
+}
+async function playSounds(st, ids) {
+  const audio = st.settings;
+  if (!ids.length || audio.muted || !(audio.volume > 0)) return;
+  try {
+    await ensureOffscreen();
+    await chrome.runtime.sendMessage({ target: 'offscreen', type: 'sound', sounds: ids, volume: audio.volume, pitch: ANIMAL_PITCH[st.animal] || 1 });
+  } catch (error) { console.warn('Focus Friend sound failed:', error); }
+}
+
 function publishPanelState() {
   chrome.storage.local.set({ ffPanel: { open: panelOpen, canClose: canClosePanel } });
 }
@@ -36,10 +58,14 @@ function commit(st) {
     return !muted && ['warn', 'moodSad', 'moodPanic', 'moodFinal'].includes(e.type);
   }).pop();
   if (notificationEvent)
-    chrome.notifications.create('', { type: 'basic', iconUrl: 'icons/icon128.png', title: 'Focus Friend', message: notificationEvent.text, priority: 2 })
+    chrome.notifications.create('', { type: 'basic', iconUrl: 'icons/icon128.png', title: 'Focus Friend', message: notificationEvent.text, priority: 2, silent: true })
       .catch(error => console.warn('Focus Friend notification failed:', error));
+  const plan = planSounds(st, fresh, st.lastMood);
+  st.lastMood = moodKey(st);
   if (fresh.length) st.notified = fresh[fresh.length - 1].id;
-  return saveState(st);
+  const saved = saveState(st);
+  playSounds(st, plan); // Do not delay state updates while audio initializes.
+  return saved;
 }
 
 async function act(m) {
@@ -51,6 +77,7 @@ async function act(m) {
   if (!st.session && (m.type === 'tick' || m.type === 'refresh')) return;
   advance(st, now);
   const s = st.session;
+  let preview = null;
   switch (m.type) {
     case 'start': {
       if (s) break;
@@ -128,7 +155,7 @@ async function act(m) {
     case 'settings': {
       const c = m.settings || {};
       const hadDemoUnlocks = demoItemsUnlocked(st);
-      st.settings.sound = !!c.sound; st.settings.demo = !!c.demo; st.settings.demoUnlocks = !!c.demoUnlocks;
+      st.settings.demo = !!c.demo; st.settings.demoUnlocks = !!c.demoUnlocks;
       if (Array.isArray(c.productive)) st.settings.productive = [...new Set(c.productive.map(cleanDomain).filter(Boolean))];
       if (Array.isArray(c.distracting)) st.settings.distracting = [...new Set(c.distracting.map(cleanDomain).filter(Boolean))];
       if (hadDemoUnlocks && !demoItemsUnlocked(st)) {
@@ -139,6 +166,17 @@ async function act(m) {
       if (st.session) applyTab(st, await currentTab());
       break;
     }
+    case 'audio': {
+      const audio = st.settings;
+      if (typeof m.volume === 'number') {
+        audio.volume = Math.max(0, Math.min(100, Math.round(m.volume)));
+        if (audio.volume > 0 && m.autoUnmute) audio.muted = false;
+      }
+      if (typeof m.muted === 'boolean') audio.muted = m.muted;
+      if (m.preview && !audio.muted && audio.volume > 0) preview = 'happy';
+      break;
+    }
+    case 'testSound': if (SOUND_IDS.includes(m.id)) preview = m.id; break;
     case 'dismiss': st.last = null; break;
     case 'reset': await chrome.storage.local.clear(); return;
     case 'alarm':
@@ -148,7 +186,9 @@ async function act(m) {
       break;
   }
   settle(st);
-  return commit(st);
+  const done = await commit(st);
+  if (preview) await playSounds(st, [preview]);
+  return done;
 }
 
 chrome.runtime.onMessage.addListener((m, sender) => {

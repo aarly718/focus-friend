@@ -54,6 +54,8 @@
     #open { width:100%; padding:6px 8px; border-radius:10px; background:#7C6CF0; color:#fff; font-size:10px; font-weight:800; }
     #toggle { position:absolute; top:6px; right:6px; width:24px; height:24px; padding:0; border-radius:50%; color:#756A83; background:rgba(239,234,251,.9); font-size:14px; line-height:24px; }
     .mini #toggle { top:-7px; right:-7px; box-shadow:0 2px 7px rgba(54,35,77,.2); }
+    #mute { position:absolute; top:6px; left:6px; z-index:5; width:24px; height:24px; padding:0; border-radius:50%; color:#756A83; background:rgba(239,234,251,.9); font-size:12px; line-height:24px; }
+    .mini #mute { display:none; }
     .tail { transform-box:view-box; transform-origin:84px 112px; }
     .wag { animation:wag .55s ease-in-out infinite; }
     .tail-sway { animation:tail-sway 2.2s ease-in-out infinite; }
@@ -86,6 +88,7 @@
   <div id="card">
     <div id="drag"><div id="pet-stage"><div id="pet-circle" aria-hidden="true"></div><div id="buddyAura" class="buddy-aura" aria-hidden="true"></div><div id="buddy"></div></div></div>
     <button id="toggle" type="button" title="Minimize Focus Friend" aria-label="Minimize Focus Friend">−</button>
+    <button id="mute" type="button" title="Mute sounds" aria-label="Mute sounds">🔊</button>
     <div class="meta"><div id="time">Ready!</div><div id="status">Start a focus session</div></div>
     <div id="health"><i></i></div>
     <button id="open" type="button">Open Focus Friend</button>
@@ -99,6 +102,7 @@
   const healthBar = root.querySelector('#health i');
   const toggle = root.getElementById('toggle');
   const openButton = root.getElementById('open');
+  const muteButton = root.getElementById('mute');
   let st = null, minimized = false, buddyKey = '', panelState = { open: false, canClose: false };
   let dragging = false, dragMoved = false, startX = 0, startY = 0, startLeft = 18, startTop = 0;
   let tickTimer = 0, stopped = false;
@@ -152,6 +156,10 @@
     toggle.textContent = minimized ? '+' : '−';
     toggle.title = minimized ? 'Expand Focus Friend' : 'Minimize Focus Friend';
     toggle.setAttribute('aria-label', toggle.title);
+    const silent = st.settings.muted || st.settings.volume === 0;
+    muteButton.textContent = silent ? '🔇' : '🔊';
+    muteButton.title = st.settings.muted ? 'Unmute sounds' : 'Mute sounds';
+    muteButton.setAttribute('aria-label', muteButton.title);
     openButton.textContent = panelState.open && panelState.canClose ? 'Close Focus Friend' : 'Open Focus Friend';
     openButton.title = panelState.open && !panelState.canClose ? 'Use Chrome\'s side-panel control to close' : '';
     const mood = moodOf(), key = [st.animal, mood, st.equipped, st.color].join('|');
@@ -177,6 +185,7 @@
     if (!withExtensionContext(() => chrome.storage.local.set({ ffWidget: { minimized } }))) return;
     render();
   });
+  muteButton.addEventListener('click', e => { e.stopPropagation(); sendMessage({ type: 'audio', muted: !st.settings.muted, preview: true }); });
   openButton.addEventListener('click', () => sendMessage({ type: 'togglePanel' }));
 
   root.getElementById('drag').addEventListener('pointerdown', e => {

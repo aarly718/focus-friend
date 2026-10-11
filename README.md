@@ -35,7 +35,8 @@ Real sessions are at least 15 minutes, which is slow for a live demo. In **Setti
 | Pausing | Allowed. Paused time never counts toward points or the streak |
 | Closing Chrome | Pauses the session. Reopening the panel keeps the timer |
 | Emergency exit | "End session" earns no points, and minutes already focused still count toward the streak |
-| Notifications | On entering a distracting site and at mood thresholds: sad (50%), panicking (25%), final warning (10%), and fainted (0%). Each alert gets a fresh system banner. Fainting mutes notifications until rescue or a new session. Sound is off by default |
+| Notifications | On entering a distracting site and at mood thresholds: sad (50%), panicking (25%), final warning (10%), and fainted (0%). Each alert gets a fresh silent system banner. Fainting mutes notifications until rescue or a new session |
+| Sounds | Muted by default, with a speaker button and volume slider in the side panel and a mute button on the floating buddy. Meaningful moods and events have synthesized sounds; routine clicks, pause, and resume stay quiet |
 | Privacy | Only totals and settings are stored (`chrome.storage.local`). Browsing history is never saved |
 
 ### Shop
@@ -57,10 +58,13 @@ shared.js         Game rules and pure logic (health, points, streak, site classi
 art.js            Approved artwork crop map, mood selection, and accessory overlays
 assets/pets/      Six approved production contact sheets (30 animals, 5 moods)
 content.js        Floating, draggable webpage buddy (isolated in Shadow DOM)
+sound.js          Synthesized sound effects (no audio files)
+offscreen.html/js Hidden audio player used while the side panel is closed
 sidepanel.html    Side panel page
 sidepanel.css     Styling
 sidepanel.js      UI: sends actions to the worker, renders the state it saves
 tests/logic.test.js   Run with: node tests/logic.test.js
+tests/sound.test.js   Run with: node tests/sound.test.js
 icons/            Extension icons
 ```
 
@@ -71,6 +75,7 @@ How the pieces talk: the side panel sends small messages (`start`, `pause`, `tre
 * **Game balance:** all numbers (grace period, 20% allowance, costs, rescue, streak minutes) are constants at the top of `shared.js`.
 * **Site lists:** defaults are `DEFAULT_PRODUCTIVE` and `DEFAULT_DISTRACTING` in `shared.js`.
 * **New animals:** add its approved five-mood artwork to a production contact sheet, map its sheet row in `ANIMALS` in `art.js`, and add its id to `ANIMAL_IDS` in `shared.js`. The test checks they match.
+* **Sounds:** edit the note sequences in `SOUND_NOTES` in `sound.js`, event mappings in `shared.js`, and each animal's pitch in `ANIMAL_PITCH`.
 * **Accessories and colors:** `ITEMS` in `shared.js`, drawn in `accessory()` in `art.js`.
 
 ## Known limits

@@ -10,6 +10,11 @@
   <header>
     <div class="logo">Focus Friend</div>
     <div class="stats"><span id="pts">⭐ 0</span><span id="str">🔥 0</span></div>
+    <div class="soundbar">
+      <button id="muteBtn" class="icon-btn" type="button" data-a="toggleMute" aria-pressed="true" aria-label="Unmute sounds" title="Unmute sounds">🔇</button>
+      <input id="hVol" type="range" min="0" max="100" step="5" value="60" aria-label="Sound volume">
+      <span id="hVolNum">Muted</span>
+    </div>
   </header>
   <div id="toast" hidden></div>
   <main>
