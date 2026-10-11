@@ -25,16 +25,30 @@ vm.runInContext(read('shared.js') + '\n' + read('background.js').replace("import
 const { act, commit, evt, DEFAULT_STATE, MIN, allowedMs } = ctx.api;
 
 (async () => {
-  // Non-mood events remain in-app only; desktop notifications are threshold-only.
+  // Entering a distracting site creates a fresh desktop alert; timer events stay in-app.
   saved = DEFAULT_STATE();
-  for (const type of ['warn', 'five', 'complete']) evt(saved, type, type);
+  for (const type of ['five', 'complete']) evt(saved, type, type);
   await commit(saved);
   assert.equal(notifications.length, 0);
-  evt(saved, 'moodSad', 'Your buddy is sad. Stay focused!');
+  evt(saved, 'warn', 'Your buddy is getting distracted!');
   await commit(saved);
   assert.equal(notifications.length, 1);
-  assert.equal(notifications[0].id, 'focus-friend-mood');
-  assert.equal(notifications[0].message, 'Your buddy is sad. Stay focused!');
+  assert.equal(notifications[0].id, '');
+  evt(saved, 'moodSad', 'Your buddy is sad. Stay focused!');
+  await commit(saved);
+  assert.equal(notifications.length, 2);
+  assert.equal(notifications[1].id, '');
+  assert.equal(notifications[1].message, 'Your buddy is sad. Stay focused!');
+
+  // A fainted session suppresses later warnings until it is rescued.
+  saved.session = { notificationsMuted: true };
+  evt(saved, 'warn', 'muted');
+  await commit(saved);
+  assert.equal(notifications.length, 2);
+  evt(saved, 'moodFaint', 'Your buddy fainted. Rescue it or end the session.');
+  await commit(saved);
+  assert.equal(notifications.length, 3);
+  assert.equal(notifications[2].message, 'Your buddy fainted. Rescue it or end the session.');
 
   // Demo rescue revives for free and re-enables future mood alerts.
   saved = DEFAULT_STATE();

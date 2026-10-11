@@ -28,13 +28,16 @@ function cleanDomain(x) { return String(x).toLowerCase().trim().replace(/^https?
 
 function commit(st) {
   const fresh = (st.events || []).filter(e => e.id > st.notified);
-  // Desktop notifications are reserved for mood thresholds. If a delayed tick
-  // crosses more than one threshold, show only the newest/most urgent state.
-  const moodEvent = fresh.filter(e => ['moodSad', 'moodPanic', 'moodFinal', 'moodFaint'].includes(e.type)).pop();
-  if (moodEvent)
-    // Reuse one id so a fast demo replaces the prior mood alert instead of
-    // leaving several system notifications queued behind the current state.
-    chrome.notifications.create('focus-friend-mood', { type: 'basic', iconUrl: 'icons/icon128.png', title: 'Focus Friend', message: moodEvent.text });
+  // Use a new notification for each alert so Chrome/Windows presents a fresh
+  // banner. Once fainted, only the faint alert is allowed until rescue/new start.
+  const muted = !!(st.session && st.session.notificationsMuted);
+  const notificationEvent = fresh.filter(e => {
+    if (e.type === 'moodFaint') return true;
+    return !muted && ['warn', 'moodSad', 'moodPanic', 'moodFinal'].includes(e.type);
+  }).pop();
+  if (notificationEvent)
+    chrome.notifications.create('', { type: 'basic', iconUrl: 'icons/icon128.png', title: 'Focus Friend', message: notificationEvent.text, priority: 2 })
+      .catch(error => console.warn('Focus Friend notification failed:', error));
   if (fresh.length) st.notified = fresh[fresh.length - 1].id;
   return saveState(st);
 }

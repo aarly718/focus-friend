@@ -35,7 +35,7 @@ Real sessions are at least 15 minutes, which is slow for a live demo. In **Setti
 | Pausing | Allowed. Paused time never counts toward points or the streak |
 | Closing Chrome | Pauses the session. Reopening the panel keeps the timer |
 | Emergency exit | "End session" earns no points, and minutes already focused still count toward the streak |
-| Notifications | Only on mood thresholds: sad (50%), panicking (25%), final warning (10%), and fainted (0%). Fainting mutes notifications until rescue or a new session. Sound is off by default |
+| Notifications | On entering a distracting site and at mood thresholds: sad (50%), panicking (25%), final warning (10%), and fainted (0%). Each alert gets a fresh system banner. Fainting mutes notifications until rescue or a new session. Sound is off by default |
 | Privacy | Only totals and settings are stored (`chrome.storage.local`). Browsing history is never saved |
 
 ### Shop
