@@ -32,7 +32,9 @@ function commit(st) {
   // crosses more than one threshold, show only the newest/most urgent state.
   const moodEvent = fresh.filter(e => ['moodSad', 'moodPanic', 'moodFinal', 'moodFaint'].includes(e.type)).pop();
   if (moodEvent)
-    chrome.notifications.create('', { type: 'basic', iconUrl: 'icons/icon128.png', title: 'Focus Friend', message: moodEvent.text });
+    // Reuse one id so a fast demo replaces the prior mood alert instead of
+    // leaving several system notifications queued behind the current state.
+    chrome.notifications.create('focus-friend-mood', { type: 'basic', iconUrl: 'icons/icon128.png', title: 'Focus Friend', message: moodEvent.text });
   if (fresh.length) st.notified = fresh[fresh.length - 1].id;
   return saveState(st);
 }

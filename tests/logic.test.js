@@ -51,6 +51,12 @@ assert.equal(pts(30, 100), 45); assert.equal(pts(30, 80), 42); assert.equal(pts(
 let b = session(30, { cat: 'distracting', graceLeft: 0 }); run(b, 60000, 5000); assert.equal(b.session.prodMs, 0);
 let c = session(30, { status: 'paused' }); advance(c, 600000); assert.equal(c.session.activeMs, 0);
 
+// Demo countdown is 30x, but health drains at 10x so notifications remain readable.
+let demoDamage = session(15, { cat: 'distracting' }); demoDamage.settings.demo = true;
+run(demoDamage, 11000, 1000);
+assert.equal(demoDamage.session.activeMs, 11 * 30 * 1000);
+assert.equal(demoDamage.session.distMs, 10 * 1000);
+
 // streak secures on the 15th productive minute, and a failed session keeps the minutes
 let d = session(60); run(d, 15 * MIN + 5000);
 assert.equal(d.streak.count, 1); assert.equal(d.day.secured, true);
@@ -63,6 +69,7 @@ for (const an of ANIMALS) for (const m of ['happy', 'okay', 'sad', 'panic', 'fai
     const art = buddySVG(an[0], m, opt);
     assert.ok(art.startsWith('<span class="buddy-art') && art.endsWith('</span>'), an[0] + ' ' + m);
     assert.ok(art.includes('assets/pets/') && art.includes('buddy-sheet'), an[0] + ' approved asset');
+    assert.ok(!art.includes('NaN') && !art.includes('undefined'), an[0] + ' valid accessory geometry');
   }
 }
 assert.ok(auraHTML('happy').includes('heart'));

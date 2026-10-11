@@ -16,7 +16,7 @@ Requires Chrome 116 or newer (side panel support). After editing code, click the
 
 ### Demo mode
 
-Real sessions are at least 15 minutes, which is slow for a live demo. In **Settings**, turn on **Demo mode**: session time runs 30x faster and 1-minute sessions are allowed. The 10-second warning grace period stays in real time. **Prepare judge demo** seeds 100 points and 14 of 15 streak minutes; demo rescue is free, and **Demo: next mood** advances health one threshold at a time.
+Real sessions are at least 15 minutes, which is slow for a live demo. In **Settings**, turn on **Demo mode**: session time runs 30x faster, health drains at 10x so each mood remains readable, and 1-minute sessions are allowed. The 10-second warning grace period stays in real time. **Prepare judge demo** seeds 100 points and 14 of 15 streak minutes; demo rescue is free, and **Demo: next mood** advances health one threshold at a time. Pause briefly after each click if you want judges to read every system notification.
 
 ## How it works
 

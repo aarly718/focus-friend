@@ -11,7 +11,7 @@ const chrome = {
   tabs: { query: async () => [], onActivated: { addListener() {} }, onUpdated: { addListener() {} } },
   windows: { onFocusChanged: { addListener() {} } },
   alarms: { create() {}, onAlarm: { addListener() {} } },
-  notifications: { create: async (id, options) => notifications.push(options) },
+  notifications: { create: async (id, options) => notifications.push({ id, ...options }) },
   runtime: {
     onMessage: { addListener() {} }, onConnect: { addListener() {} },
     onStartup: { addListener() {} }, onInstalled: { addListener() {} }
@@ -33,6 +33,7 @@ const { act, commit, evt, DEFAULT_STATE, MIN, allowedMs } = ctx.api;
   evt(saved, 'moodSad', 'Your buddy is sad. Stay focused!');
   await commit(saved);
   assert.equal(notifications.length, 1);
+  assert.equal(notifications[0].id, 'focus-friend-mood');
   assert.equal(notifications[0].message, 'Your buddy is sad. Stay focused!');
 
   // Demo rescue revives for free and re-enables future mood alerts.

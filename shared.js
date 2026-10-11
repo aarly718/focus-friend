@@ -10,6 +10,7 @@ const RESCUE_COST = 20, RESCUE_HEALTH = 30;
 const TREAT_COST = 10, TREAT_HEAL = 20;
 const ANIMAL_COST = 200;
 const DEMO_SPEED = 30;        // demo mode makes session time run 30x faster
+const DEMO_DAMAGE_SPEED = 10; // slower than the demo clock so each mood remains visible
 const MOOD_ALERTS = [
   null,
   { type: 'moodSad', text: 'Your buddy is sad. Stay focused!' },
@@ -110,6 +111,7 @@ function advance(st, now) {
   s.lastTick = now;
   if (s.status !== 'running' || real <= 0) return;
   const speed = st.settings.demo ? DEMO_SPEED : 1;
+  const damageSpeed = st.settings.demo ? DEMO_DAMAGE_SPEED : 1;
   real = Math.min(real, 90000, (s.plannedMs - s.activeMs) / speed);   // 90s cap: laptop sleep must not count
   if (real <= 0) return;
   const sim = real * speed;
@@ -118,7 +120,7 @@ function advance(st, now) {
     const g = Math.min(real, s.graceLeft);                 // grace period uses real time
     s.graceLeft -= g;
     const room = Math.max(0, allowedMs(s) - s.distMs);
-    s.distMs += Math.min(sim * (1 - g / real), room);
+    s.distMs += Math.min(real * damageSpeed * (1 - g / real), room);
     if (s.distMs >= allowedMs(s) - 1) s.status = 'fainted';
     updateMoodAlert(st);
   } else {

@@ -10,6 +10,7 @@
   root.innerHTML = `<style>
     :host { all:initial; display:block; width:max-content; position:fixed; left:18px; bottom:18px; z-index:2147483647; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color:#3B2F4A; }
     * { box-sizing:border-box; }
+    #card, #card * { font-family:system-ui,-apple-system,"Segoe UI",sans-serif !important; font-style:normal; }
     #card { position:relative; width:154px; padding:8px 10px 10px; border:1px solid rgba(124,108,240,.2); border-radius:22px; background:rgba(255,250,243,.96); box-shadow:0 10px 30px rgba(54,35,77,.2); backdrop-filter:blur(8px); user-select:none; transition:width .2s, transform .2s; }
     #card:hover { transform:translateY(-2px); }
     #card.mini { width:66px; padding:6px; border-radius:20px; }
