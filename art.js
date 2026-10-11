@@ -1,6 +1,6 @@
-// Cute full-body animal buddies drawn as SVG (no image files needed).
-// Moods: happy, okay, sad, panic, fainted, sleeping.  buddySVG(id, mood, {acc, hue}) returns an <svg> string.
-// To add an animal: draw it with mam({...}) or write a small function, add it to ANIMALS and ANIMAL_IDS (shared.js).
+// Legacy SVG construction helpers are retained temporarily for compatibility,
+// but the active buddySVG renderer at the bottom uses the approved bitmap art.
+// The legacy construction helpers below are not used by the production renderer.
 
 const E = (x, y, rx, ry, f, a) => '<ellipse cx="' + x + '" cy="' + y + '" rx="' + rx + '" ry="' + ry + '" fill="' + f + '" ' + (a || '') + '/>';
 const Ci = (x, y, r, f, a) => '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + f + '" ' + (a || '') + '/>';
@@ -141,7 +141,7 @@ function frog(m) {
 
 const WOOL = 'stroke="#D9D3C7" stroke-width="1.5"';
 // [id, name, sound, drawFn, accessory anchors {t: top of head, e: eye y, d: half eye distance}]
-const ANIMALS = [
+const LEGACY_ANIMALS = [
 ['retriever', 'Golden retriever', 'Woof!', m => mam({ b: '#F2AC4B', h: '#F7B85F', bl: '#FFE0A2', e: '#D98A36', et: 'fluffy', mz: '#FFE1AD', nc: '#30251F', tail: 'bushy', tc: '#E79A3D', ec: '#30251F', mc: '#30251F' }, m)],
 ['shepherd', 'German shepherd', 'Bark!', m => mam({ b: '#C98A3E', bl: '#D9A15A', pc: '#B8772F', e: '#C98A3E', ei: '#2E2A28', et: 'point', mz: '#4A3A30', nc: '#0f0b09', tail: 'dog', tc: '#2E2A28', bodyX: Pa('M36 100 Q60 80 84 100 Q82 118 60 120 Q38 118 36 100Z', '#2E2A28'), ec: '#2A1B12', mc: '#F6D9A0', my: 80 }, m)],
 ['corgi', 'Corgi', 'Yip!', m => mam({ b: '#E39A45', bl: '#fff', pc: '#fff', e: '#E39A45', ei: '#F3B0A0', et: 'point', mz: '#fff', nc: '#2b2b2b', tail: 'nub', headX: Pa('M60 36 Q50 54 53 66 L67 66 Q70 54 60 36Z', '#fff'), mc: '#2b2b2b' }, m)],
@@ -192,10 +192,74 @@ function auraHTML(mood) {
   return (AURA_PARTICLES[mood] || []).map((p, i) => '<span class="aura-particle ' + p[0] + '" style="--x:' + p[2] + '%;--y:' + p[3] + '%;--delay:' + p[4] + 's;--i:' + i + '">' + p[1] + '</span>').join('');
 }
 
-function buddySVG(id, mood, opt) {
+function legacyBuddySVG(id, mood, opt) {
   opt = opt || {};
-  const a = ANIMALS.find(x => x[0] === id) || ANIMALS[0], g = Object.assign({ t: 36, e: 59, d: 11 }, a[4] || {});
+  const a = LEGACY_ANIMALS.find(x => x[0] === id) || LEGACY_ANIMALS[0], g = Object.assign({ t: 36, e: 59, d: 11 }, a[4] || {});
   const hue = opt.hue ? ' style="filter:hue-rotate(' + opt.hue + 'deg) saturate(1.15)"' : '';
   const z = mood === 'sleeping' ? '<text x="94" y="38" font-size="15" fill="#8a7f9e">z</text><text x="104" y="24" font-size="12" fill="#8a7f9e">z</text>' : '';
   return '<svg class="mood-' + mood + '" viewBox="0 0 130 150" width="100%" role="img" aria-label="' + a[1] + ', ' + mood + '"><g' + (mood === 'fainted' ? ' transform="translate(2 5) rotate(9 60 96)"' : '') + '><g' + hue + '>' + a[3](mood) + '</g>' + (opt.acc ? accessory(opt.acc, g) : '') + '</g>' + z + '</svg>';
+}
+
+// Production renderer: exact crops from the six approved 1254px contact sheets.
+const PET_SHEETS = {
+  dogs: { file: 'assets/pets/01-dogs-simple.png', crop: 210, xs: [268, 488, 705, 921, 1138], ys: [160, 381, 609, 845, 1082] },
+  small: { file: 'assets/pets/02-small-pets-simple.png', crop: 204, xs: [278, 492, 707, 923, 1140], ys: [155, 367, 588, 821, 1046] },
+  forest: { file: 'assets/pets/03-forest-bears-simple.png', crop: 206, xs: [252, 471, 691, 912, 1130], ys: [157, 374, 593, 816, 1043] },
+  woodland: { file: 'assets/pets/04-woodland-farm-simple.png', crop: 210, xs: [284, 500, 712, 928, 1140], ys: [168, 396, 620, 843, 1070] },
+  farm: { file: 'assets/pets/05-farm-jungle-simple.png', crop: 216, xs: [243, 464, 682, 905, 1129], ys: [163, 393, 621, 872, 1105] },
+  birds: { file: 'assets/pets/06-birds-frog-simple.png', crop: 210, xs: [265, 480, 695, 911, 1130], ys: [165, 382, 602, 826, 1034] }
+};
+
+// [id, display name, sound, sheet, row, accessory anchors]
+const ANIMALS = [
+  ['retriever', 'Golden retriever', 'Woof!', 'dogs', 0],
+  ['shepherd', 'German shepherd', 'Bark!', 'dogs', 1],
+  ['corgi', 'Corgi', 'Yip!', 'dogs', 2],
+  ['husky', 'Husky', 'Awoo!', 'dogs', 3],
+  ['dalmatian', 'Dalmatian', 'Woof!', 'dogs', 4],
+  ['pug', 'Pug', 'Snort!', 'small', 0],
+  ['tabby', 'Orange tabby', 'Meow!', 'small', 1],
+  ['blackcat', 'Black cat', 'Mrrp!', 'small', 2],
+  ['bunny', 'Bunny', 'Squeak!', 'small', 3, { t: 34 }],
+  ['fox', 'Fox', 'Yip yip!', 'small', 4],
+  ['wolf', 'Wolf', 'Howl!', 'forest', 0],
+  ['panda', 'Panda', 'Munch!', 'forest', 1],
+  ['polarbear', 'Polar bear', 'Roar!', 'forest', 2],
+  ['brownbear', 'Brown bear', 'Grr!', 'forest', 3],
+  ['koala', 'Koala', 'Zzz!', 'forest', 4],
+  ['raccoon', 'Raccoon', 'Chitter!', 'woodland', 0],
+  ['redpanda', 'Red panda', 'Chirp!', 'woodland', 1],
+  ['otter', 'Sea otter', 'Eek!', 'woodland', 2],
+  ['capybara', 'Capybara', 'Chill!', 'woodland', 3, { e: 61 }],
+  ['pig', 'Pig', 'Oink!', 'woodland', 4],
+  ['cow', 'Cow', 'Moo!', 'farm', 0],
+  ['sheep', 'Sheep', 'Baa!', 'farm', 1, { t: 31 }],
+  ['lion', 'Lion', 'Roar!', 'farm', 2, { t: 29 }],
+  ['tiger', 'Tiger', 'Rawr!', 'farm', 3],
+  ['monkey', 'Monkey', 'Ooh ooh!', 'farm', 4],
+  ['penguin', 'Penguin', 'Honk!', 'birds', 0],
+  ['owl', 'Owl', 'Hoo!', 'birds', 1],
+  ['chicken', 'Chicken', 'Bawk!', 'birds', 2, { t: 31 }],
+  ['duck', 'Duck', 'Quack!', 'birds', 3],
+  ['frog', 'Frog', 'Ribbit!', 'birds', 4, { t: 31, e: 47, d: 16 }]
+];
+
+const MOOD_COLUMN = { happy: 0, okay: 1, sleeping: 1, sad: 2, panic: 3, fainted: 4 };
+
+function assetURL(path) {
+  return typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL ? chrome.runtime.getURL(path) : path;
+}
+
+function buddySVG(id, mood, opt) {
+  opt = opt || {};
+  const animal = ANIMALS.find(x => x[0] === id) || ANIMALS[0];
+  const sheet = PET_SHEETS[animal[3]], row = animal[4];
+  const col = Object.prototype.hasOwnProperty.call(MOOD_COLUMN, mood) ? MOOD_COLUMN[mood] : 0;
+  const crop = sheet.crop, x = sheet.xs[col] - crop / 2, y = sheet.ys[row] - crop / 2;
+  const width = 1254 / crop * 100, left = -x / crop * 100, top = -y / crop * 100;
+  const hue = opt.hue ? 'filter:hue-rotate(' + opt.hue + 'deg) saturate(1.15);' : '';
+  const anchors = Object.assign({ t: 36, e: 59, d: 11 }, animal[5] || {});
+  const acc = opt.acc ? '<svg class="buddy-accessory" viewBox="0 0 120 150" aria-hidden="true">' + accessory(opt.acc, anchors) + '</svg>' : '';
+  const sleep = mood === 'sleeping' ? '<span class="buddy-sleep" aria-hidden="true">z<sup>z</sup></span>' : '';
+  return '<span class="buddy-art mood-' + mood + '" role="img" aria-label="' + animal[1] + ', ' + mood + '"><span class="buddy-crop"><img class="buddy-sheet" src="' + assetURL(sheet.file) + '" alt="" draggable="false" style="width:' + width.toFixed(4) + '%;left:' + left.toFixed(4) + '%;top:' + top.toFixed(4) + '%;' + hue + '"></span>' + acc + sleep + '</span>';
 }

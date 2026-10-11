@@ -19,6 +19,17 @@
     #pet-circle { position:absolute; left:50%; top:50%; width:92px; height:92px; transform:translate(-50%,-50%); border-radius:50%; background:#EEE9FF; box-shadow:inset 0 0 0 1px #D8D0FF; transition:box-shadow .12s,transform .12s; }
     #card.pet-active #pet-circle { box-shadow:inset 0 0 0 2px #3B2F4A; transform:translate(-50%,-50%) scale(.98); }
     #buddy { position:absolute; left:50%; bottom:-2px; z-index:2; width:88px; height:88px; transform:translateX(-50%); }
+    .buddy-art { position:relative; display:block; width:100%; aspect-ratio:1; transform-origin:50% 80%; }
+    .buddy-crop { position:absolute; inset:0; overflow:hidden; border-radius:50%; background:#EEE9FF; box-shadow:inset 0 0 0 1px rgba(124,108,240,.2); transition:box-shadow .12s; }
+    #card.pet-active .buddy-crop { box-shadow:inset 0 0 0 2px #3B2F4A; }
+    .buddy-sheet { position:absolute; display:block; max-width:none; height:auto; user-select:none; pointer-events:none; }
+    .buddy-accessory { position:absolute; inset:0; z-index:3; display:block; width:100%; height:100%; pointer-events:none; }
+    .buddy-sleep { position:absolute; z-index:4; right:3%; top:4%; color:#7669B8; font-size:12px; font-weight:900; transform:rotate(8deg); }
+    .buddy-sleep sup { font-size:.58em; margin-left:1px; }
+    .mood-happy.buddy-art { animation:pet-breathe 2.4s ease-in-out infinite; }
+    .mood-sad.buddy-art { animation:pet-sigh 2.8s ease-in-out infinite; }
+    .mood-panic.buddy-art { animation:pet-startle .42s ease-in-out infinite alternate; }
+    .mood-sleeping.buddy-art { animation:pet-sleep 3s ease-in-out infinite; }
     #card.mini #pet-stage { width:52px; height:52px; margin:0; }
     #card.mini #pet-circle { width:52px; height:52px; }
     #card.mini #buddy { width:50px; height:50px; bottom:-1px; }
@@ -65,7 +76,11 @@
     @keyframes aura-mist { 0%,100% { opacity:.15; transform:translateX(-3px); } 50% { opacity:.55; transform:translateX(5px); } }
     @keyframes aura-alert { 0%,100% { opacity:.25; transform:scale(.8) rotate(-6deg); } 50% { opacity:1; transform:scale(1.18) rotate(6deg); } }
     @keyframes aura-orbit { 0% { opacity:0; transform:rotate(0) translateX(2px); } 25%,70% { opacity:.8; } 100% { opacity:0; transform:rotate(360deg) translateX(2px); } }
-    @media (prefers-reduced-motion:reduce) { #card { transition:none; } .wag,.tail-sway,.tail-twitch,.mood-happy .ears,.mood-panic .ears,.fl,.fr,.aura-particle { animation:none; } .aura-particle { opacity:.65; } }
+    @keyframes pet-breathe { 0%,100% { transform:translateY(0) rotate(-.5deg); } 50% { transform:translateY(-2px) rotate(.6deg); } }
+    @keyframes pet-sigh { 0%,72%,100% { transform:translateY(0); } 82% { transform:translateY(1px) scaleY(.985); } }
+    @keyframes pet-startle { from { transform:translateX(-.7px) rotate(-.8deg); } to { transform:translateX(.7px) rotate(.8deg); } }
+    @keyframes pet-sleep { 0%,100% { transform:translateY(0) rotate(-1deg); } 50% { transform:translateY(1px) rotate(1deg); } }
+    @media (prefers-reduced-motion:reduce) { #card { transition:none; } .buddy-art,.wag,.tail-sway,.tail-twitch,.mood-happy .ears,.mood-panic .ears,.fl,.fr,.aura-particle { animation:none; } .aura-particle { opacity:.65; } }
   </style>
   <div id="card">
     <div id="drag"><div id="pet-stage"><div id="pet-circle" aria-hidden="true"></div><div id="buddyAura" class="buddy-aura" aria-hidden="true"></div><div id="buddy"></div></div></div>

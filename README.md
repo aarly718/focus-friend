@@ -54,7 +54,8 @@ Real sessions are at least 15 minutes, which is slow for a live demo. In **Setti
 manifest.json     Manifest V3, permissions, side panel
 background.js     Service worker: the single source of truth for state, tab watching, notifications
 shared.js         Game rules and pure logic (health, points, streak, site classification)
-art.js            All 30 SVG animals, 6 moods each, plus accessories (no image files)
+art.js            Approved artwork crop map, mood selection, and accessory overlays
+assets/pets/      Six approved production contact sheets (30 animals, 5 moods)
 content.js        Floating, draggable webpage buddy (isolated in Shadow DOM)
 sidepanel.html    Side panel page
 sidepanel.css     Styling
@@ -69,7 +70,7 @@ How the pieces talk: the side panel sends small messages (`start`, `pause`, `tre
 
 * **Game balance:** all numbers (grace period, 20% allowance, costs, rescue, streak minutes) are constants at the top of `shared.js`.
 * **Site lists:** defaults are `DEFAULT_PRODUCTIVE` and `DEFAULT_DISTRACTING` in `shared.js`.
-* **New animals:** draw one with `mam({...})` (any four-legged animal) or a custom function in `art.js`, add it to `ANIMALS`, and add its id to `ANIMAL_IDS` in `shared.js`. The test checks they match.
+* **New animals:** add its approved five-mood artwork to a production contact sheet, map its sheet row in `ANIMALS` in `art.js`, and add its id to `ANIMAL_IDS` in `shared.js`. The test checks they match.
 * **Accessories and colors:** `ITEMS` in `shared.js`, drawn in `accessory()` in `art.js`.
 
 ## Known limits

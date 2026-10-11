@@ -41,11 +41,13 @@ let c = session(30, { status: 'paused' }); advance(c, 600000); assert.equal(c.se
 let d = session(60); run(d, 15 * MIN + 5000);
 assert.equal(d.streak.count, 1); assert.equal(d.day.secured, true);
 
-// every animal has art in every mood, and ids match the shop list
+// every animal maps to approved bitmap art in every mood, and ids match the shop list
 assert.deepEqual(ANIMALS.map(x => x[0]), ANIMAL_IDS);
 for (const an of ANIMALS) for (const m of ['happy', 'okay', 'sad', 'panic', 'fainted', 'sleeping']) {
   for (const opt of [{}, ...ITEMS.filter(i => i.type === 'acc').map(i => ({ acc: i.id })), ...ITEMS.filter(i => i.type === 'color').map(i => ({ hue: i.hue }))]) {
-    const svg = buddySVG(an[0], m, opt); assert.ok(svg.startsWith('<svg') && svg.endsWith('</svg>'), an[0] + ' ' + m);
+    const art = buddySVG(an[0], m, opt);
+    assert.ok(art.startsWith('<span class="buddy-art') && art.endsWith('</span>'), an[0] + ' ' + m);
+    assert.ok(art.includes('assets/pets/') && art.includes('buddy-sheet'), an[0] + ' approved asset');
   }
 }
 assert.ok(auraHTML('happy').includes('heart'));
