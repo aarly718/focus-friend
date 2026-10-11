@@ -220,6 +220,17 @@ const PET_SHEETS = {
   birds: { file: 'assets/pets/06-birds-frog-simple.png', crop: 210, xs: [265, 480, 695, 911, 1130], ys: [165, 382, 602, 826, 1034] }
 };
 
+// Dedicated sleeping artwork generated from the approved character sheets.
+// Each sheet is one horizontal row in the same animal order as its source sheet.
+const SLEEP_SHEETS = {
+  dogs: { file: 'assets/pets/sleeping-dogs.png', width: 2172, crop: 400, xs: [240, 637, 1028, 1420, 1815], y: 362 },
+  small: { file: 'assets/pets/sleeping-small-pets.png', width: 2172, crop: 400, xs: [240, 637, 1028, 1420, 1815], y: 362 },
+  forest: { file: 'assets/pets/sleeping-forest-bears.png', width: 2172, crop: 400, xs: [240, 637, 1028, 1420, 1815], y: 362 },
+  woodland: { file: 'assets/pets/sleeping-woodland-farm.png', width: 2172, crop: 400, xs: [240, 637, 1028, 1420, 1815], y: 362 },
+  farm: { file: 'assets/pets/sleeping-farm-jungle.png', width: 2172, crop: 400, xs: [240, 637, 1028, 1420, 1815], y: 362 },
+  birds: { file: 'assets/pets/sleeping-birds-frog.png', width: 2172, crop: 400, xs: [240, 637, 1028, 1420, 1815], y: 362 }
+};
+
 // [id, display name, sound, sheet, row, accessory anchors]
 const ANIMALS = [
   ['retriever', 'Golden retriever', 'Woof!', 'dogs', 0, { x: 60, t: 35, e: 58, d: 11, s: 1.00, bx: 40, bt: 36, bs: .82, br: -12, hr: -8 }],
@@ -263,15 +274,15 @@ function assetURL(path) {
 function buddySVG(id, mood, opt) {
   opt = opt || {};
   const animal = ANIMALS.find(x => x[0] === id) || ANIMALS[0];
-  const sheet = PET_SHEETS[animal[3]], row = animal[4];
+  const resting = !!opt.sleeping || mood === 'sleeping', row = animal[4];
+  const sheet = resting ? SLEEP_SHEETS[animal[3]] : PET_SHEETS[animal[3]];
   const col = Object.prototype.hasOwnProperty.call(MOOD_COLUMN, mood) ? MOOD_COLUMN[mood] : 0;
-  const crop = sheet.crop, x = sheet.xs[col] - crop / 2, y = sheet.ys[row] - crop / 2;
-  const width = 1254 / crop * 100, left = -x / crop * 100, top = -y / crop * 100;
+  const cx = resting ? sheet.xs[row] : sheet.xs[col], cy = resting ? sheet.y : sheet.ys[row];
+  const crop = sheet.crop, x = cx - crop / 2, y = cy - crop / 2;
+  const width = (sheet.width || 1254) / crop * 100, left = -x / crop * 100, top = -y / crop * 100;
   const hue = opt.hue ? 'filter:hue-rotate(' + opt.hue + 'deg) saturate(1.15);' : '';
   const anchors = Object.assign({ t: 36, e: 59, d: 11 }, animal[5] || {});
   const acc = opt.acc ? '<svg class="buddy-accessory" viewBox="0 0 120 120" aria-hidden="true">' + accessory(opt.acc, anchors) + '</svg>' : '';
-  const sleeping = !!opt.sleeping || mood === 'sleeping';
-  const sleep = sleeping ? '<span class="buddy-sleep" aria-hidden="true">z<sup>z</sup></span>' : '';
-  const label = animal[1] + ', ' + mood + (sleeping ? ', resting' : '');
-  return '<span class="buddy-art mood-' + mood + (sleeping ? ' is-sleeping' : '') + '" role="img" aria-label="' + label + '"><span class="buddy-crop"><img class="buddy-sheet" src="' + assetURL(sheet.file) + '" alt="" draggable="false" style="width:' + width.toFixed(4) + '%;left:' + left.toFixed(4) + '%;top:' + top.toFixed(4) + '%;' + hue + '"></span>' + acc + sleep + '</span>';
+  const label = animal[1] + ', ' + (resting ? 'sleeping' : mood);
+  return '<span class="buddy-art mood-' + mood + (resting ? ' is-sleeping' : '') + '" role="img" aria-label="' + label + '"><span class="buddy-crop"><img class="buddy-sheet" src="' + assetURL(sheet.file) + '" alt="" draggable="false" style="width:' + width.toFixed(4) + '%;left:' + left.toFixed(4) + '%;top:' + top.toFixed(4) + '%;' + hue + '"></span>' + acc + '</span>';
 }

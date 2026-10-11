@@ -4,8 +4,8 @@ const ctx = { chrome: { storage: { local: { get: async () => ({}), set: async ()
 vm.createContext(ctx);
 const read = f => fs.readFileSync(__dirname + '/../' + f, 'utf8');
 vm.runInContext(read('shared.js') + ';this.api={advance,settle,health,classify,hostOf,DEFAULT_STATE,MIN,GRACE,ANIMAL_IDS,ITEMS,demoItemsUnlocked,moodAlertStage,updateMoodAlert,streak:shiftDay};', ctx);
-vm.runInContext(read('art.js') + ';this.art={ANIMALS,buddySVG,auraHTML};', ctx);
-const { advance, settle, health, classify, hostOf, DEFAULT_STATE, MIN, GRACE, ANIMAL_IDS, ITEMS, demoItemsUnlocked, moodAlertStage, updateMoodAlert } = ctx.api, { ANIMALS, buddySVG, auraHTML } = ctx.art;
+vm.runInContext(read('art.js') + ';this.art={ANIMALS,SLEEP_SHEETS,buddySVG,auraHTML};', ctx);
+const { advance, settle, health, classify, hostOf, DEFAULT_STATE, MIN, GRACE, ANIMAL_IDS, ITEMS, demoItemsUnlocked, moodAlertStage, updateMoodAlert } = ctx.api, { ANIMALS, SLEEP_SHEETS, buddySVG, auraHTML } = ctx.art;
 
 function session(mins, extra) {
   const st = DEFAULT_STATE();
@@ -72,7 +72,11 @@ for (const an of ANIMALS) for (const m of ['happy', 'okay', 'sad', 'panic', 'fai
     assert.ok(!art.includes('NaN') && !art.includes('undefined'), an[0] + ' valid accessory geometry');
   }
   const resting = buddySVG(an[0], m === 'sleeping' ? 'okay' : m, { sleeping: true });
-  assert.ok(resting.includes('is-sleeping') && resting.includes('buddy-sleep'), an[0] + ' resting treatment');
+  assert.ok(resting.includes('is-sleeping') && resting.includes('assets/pets/sleeping-'), an[0] + ' dedicated sleeping artwork');
+}
+assert.deepEqual(Object.keys(SLEEP_SHEETS).sort(), ['birds', 'dogs', 'farm', 'forest', 'small', 'woodland']);
+for (const sheet of Object.values(SLEEP_SHEETS)) {
+  assert.ok(fs.existsSync(__dirname + '/../' + sheet.file), sheet.file + ' exists');
 }
 assert.ok(auraHTML('happy').includes('heart'));
 assert.equal(auraHTML('okay'), '');

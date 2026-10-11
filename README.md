@@ -26,7 +26,7 @@ Real sessions are at least 15 minutes, which is slow for a live demo. In **Setti
 | Site categories | Productive, distracting, or neutral. Unlisted sites (including YouTube and Reddit by default) are neutral and do nothing. Edit the lists in Settings, or override one site for the current session from the Focus screen |
 | Warning | Entering a distracting site shows "Your buddy is getting distracted!" and starts a 10-second grace period. Health only drops after that, and stops as soon as you leave |
 | Health | `health = 100 - (distracted time / allowed distraction time) x 100`, where allowed distraction time is 20% of the session (25 min session: 5 min, 60 min: 12 min, 120 min: 24 min) |
-| Moods | 76-100 happy, 51-75 okay, 26-50 sad, 1-25 panicking, 0 fainted. Paused and just-completed sessions keep the current expression and add a resting animation plus sleep cue |
+| Moods | 76-100 happy, 51-75 okay, 26-50 sad, 1-25 panicking, 0 fainted. Paused and just-completed sessions use dedicated sleeping artwork and a resting animation |
 | Points | `base = productive minutes`, `bonus = round(base x final health / 200)`, `total = base + bonus`. Only productive and neutral time counts. Points are awarded only when the timer finishes |
 | Points are never lost | A failed session earns nothing, but nothing is taken away. Purchases are permanent |
 | Fainting | The session pauses. Spend 20 points to rescue the buddy (restores 30 health, once per session) or end the session |
@@ -56,7 +56,7 @@ manifest.json     Manifest V3, permissions, side panel
 background.js     Service worker: the single source of truth for state, tab watching, notifications
 shared.js         Game rules and pure logic (health, points, streak, site classification)
 art.js            Approved artwork crop map, mood selection, and accessory overlays
-assets/pets/      Six approved production contact sheets (30 animals, 5 moods)
+assets/pets/      Six approved mood sheets plus six sleeping sheets (30 animals, 6 moods)
 content.js        Floating, draggable webpage buddy (isolated in Shadow DOM)
 sound.js          Synthesized sound effects (no audio files)
 offscreen.html/js Hidden audio player used while the side panel is closed

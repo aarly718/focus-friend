@@ -25,8 +25,6 @@
     #card.pet-active .buddy-crop { box-shadow:inset 0 0 0 2px #3B2F4A; }
     .buddy-sheet { position:absolute; display:block; max-width:none; height:auto; user-select:none; pointer-events:none; }
     .buddy-accessory { position:absolute; inset:0; z-index:3; display:block; width:100%; height:100%; pointer-events:none; }
-    .buddy-sleep { position:absolute; z-index:4; right:3%; top:4%; color:#7669B8; font-size:12px; font-weight:900; transform:rotate(8deg); }
-    .buddy-sleep sup { font-size:.58em; margin-left:1px; }
     .mood-happy.buddy-art { animation:pet-breathe 2.4s ease-in-out infinite; }
     .mood-sad.buddy-art { animation:pet-sigh 2.8s ease-in-out infinite; }
     .mood-panic.buddy-art { animation:pet-startle .42s ease-in-out infinite alternate; }
